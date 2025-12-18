@@ -37,6 +37,7 @@ interface WebSocketContextType {
   sendImage: (imageData: string) => void;
   sendAudioWithImage: (audioData: ArrayBuffer, imageData: string) => void;
   sendText: (text: string, imageData?: string) => void;
+  stopAudio: () => void;
   onAudioReceived: (
     callback: (
       audioData: string,
@@ -322,6 +323,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     setIsConnecting(false);
   }, []);
 
+  const stopAudio = useCallback(() => {
+    console.log('Manually stopping audio and clearing queue');
+    interruptCallbackRef.current?.();
+  }, []);
+
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
@@ -448,6 +454,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     sendImage,
     sendAudioWithImage,
     sendText,
+    stopAudio,
     onAudioReceived,
     onInterrupt,
     onError,

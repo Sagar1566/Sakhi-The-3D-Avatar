@@ -26,13 +26,18 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWebSocketContext } from '@/contexts/WebSocketContext';
+import { VADConfig } from '@/components/VoiceActivityDetector';
+import { Input } from '@/components/ui/input';
 
 interface TalkingHeadProps {
   className?: string;
   cameraStream?: MediaStream | null;
+  voiceConfig?: VADConfig;
+  onVoiceConfigChange?: (config: VADConfig) => void;
+  onSpeakingStateChange?: (isSpeaking: boolean) => void;
 }
 
-const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
+const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream, voiceConfig, onVoiceConfigChange, onSpeakingStateChange }) => {
   const avatarRef = useRef<HTMLDivElement>(null);
   const headRef = useRef<{
     speakAudio: (data: {
@@ -76,6 +81,13 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Sync isSpeaking state with parent
+  useEffect(() => {
+    if (onSpeakingStateChange) {
+      onSpeakingStateChange(isSpeaking);
+    }
+  }, [isSpeaking, onSpeakingStateChange]);
 
   const avatarOptions = [
     { value: 'F', label: 'Female Avatar' },
@@ -451,17 +463,13 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
   };
 
   return (
-    <Card className={`w-full ${className}`}>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">AI Avatar</CardTitle>
-        <CardDescription>Voice-controlled 3D avatar</CardDescription>
-      </CardHeader>
+    <Card className={`w-full flex flex-col border-none shadow-none rounded-none !bg-transparent md:border md:shadow md:rounded-xl ${className}`}>
 
-      <CardContent className="space-y-6">
+
+      <CardContent className="space-y-6 flex-1 flex flex-col min-h-0 p-0 md:p-6">
         {/* Avatar Display */}
         <div
-          className="relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-200"
-          style={{ height: '500px' }}
+          className="relative overflow-hidden md:rounded-lg flex-1 w-full h-[600px] md:h-auto"
         >
           <div ref={avatarRef} className="h-full w-full" />
 
@@ -498,86 +506,7 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
           )}
         </div>
 
-        {/* Connection Control */}
-        <div className="flex gap-3">
-          <Button
-            onClick={isConnected ? disconnect : connect}
-            disabled={isConnecting || !scriptsLoaded}
-            className="flex-1"
-            variant={isConnected ? 'destructive' : 'default'}
-          >
-            {isConnecting
-              ? 'Connecting...'
-              : isConnected
-                ? 'Disconnect'
-                : 'Connect'}
-          </Button>
-        </div>
 
-        {/* Settings */}
-        <Collapsible open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="w-full">
-              <Settings className="mr-2 h-4 w-4" />
-              Avatar Settings
-              {isSettingsOpen ? (
-                <ChevronUp className="ml-2 h-4 w-4" />
-              ) : (
-                <ChevronDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Avatar</Label>
-                <Select
-                  value={selectedAvatar}
-                  onValueChange={handleAvatarChange}
-                  disabled={!scriptsLoaded}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {avatarOptions.map((avatar) => (
-                      <SelectItem key={avatar.value} value={avatar.value}>
-                        {avatar.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Mood</Label>
-                <Select
-                  value={selectedMood}
-                  onValueChange={handleMoodChange}
-                  disabled={!scriptsLoaded}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {moodOptions.map((mood) => (
-                      <SelectItem key={mood.value} value={mood.value}>
-                        {mood.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Status Display */}
-        {status && (
-          <Alert variant={status.type === 'error' ? 'destructive' : 'default'}>
-            <AlertDescription>{status.message}</AlertDescription>
-          </Alert>
-        )}
       </CardContent>
     </Card>
   );

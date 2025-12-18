@@ -334,20 +334,21 @@ const CameraStream: React.FC<CameraStreamProps> = ({
 // Floating Camera Toggle Button
 export const CameraToggleButton: React.FC<{
   onStreamChange?: (stream: MediaStream | null) => void;
-}> = ({ onStreamChange }) => {
+  className?: string;
+}> = ({ onStreamChange, className = '' }) => {
   const [showCamera, setShowCamera] = useState(false);
 
   return (
     <>
       <button
         onClick={() => setShowCamera(!showCamera)}
-        className={`fixed right-6 bottom-6 z-40 rounded-full p-4 text-white shadow-lg transition-colors ${showCamera
-            ? 'bg-red-500 hover:bg-red-600'
-            : 'bg-blue-500 hover:bg-blue-600'
-          }`}
+        className={`z-40 rounded-full flex items-center justify-center text-white shadow-lg transition-all border ${showCamera
+          ? 'bg-red-500 hover:bg-red-600 border-red-400'
+          : 'bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20'
+          } ${className}`}
         title={showCamera ? 'Close Camera' : 'Open Camera'}
       >
-        {showCamera ? <CameraOff size={24} /> : <Camera size={24} />}
+        {showCamera ? <CameraOff size={20} /> : <Camera size={20} />}
       </button>
 
       {showCamera && (

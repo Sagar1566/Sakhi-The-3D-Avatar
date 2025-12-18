@@ -1,310 +1,243 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Maximize2, Minimize2, RotateCw, Info } from 'lucide-react';
-
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select';
+import { X, Loader2, Camera, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import Script from 'next/script';
+import { useWebSocketContext } from '@/contexts/WebSocketContext';
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'model-viewer': any;
+        }
+    }
+}
 
 interface ARViewerProps {
-    className?: string;
-    selectedAvatar?: string;
-    selectedMood?: string;
-    onAvatarChange?: (avatar: string) => void;
-    onMoodChange?: (mood: string) => void;
+    onClose: () => void;
+    avatarUrl?: string;
 }
 
 const ARViewer: React.FC<ARViewerProps> = ({
-    className = '',
-    selectedAvatar = 'F',
-    selectedMood = 'neutral',
-    onAvatarChange,
-    onMoodChange
+    onClose,
+    avatarUrl = 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png'
 }) => {
-    const modelViewerRef = useRef<HTMLElement & {
-        activateAR?: () => void;
-        canActivateAR?: boolean;
-    }>(null);
-    const [isARSupported, setIsARSupported] = useState(false);
+    const [scriptLoaded, setScriptLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showInstructions, setShowInstructions] = useState(true);
-
-    const avatarOptions = [
-        { value: 'F', label: 'Female Avatar' },
-        { value: 'M', label: 'Male Avatar' }
-    ];
-
-    const moodOptions = [
-        { value: 'neutral', label: 'Neutral' },
-        { value: 'happy', label: 'Happy' },
-        { value: 'sad', label: 'Sad' },
-        { value: 'angry', label: 'Angry' },
-        { value: 'love', label: 'Love' }
-    ];
-
-    // Avatar URLs - same as TalkingHead
-    const avatarUrls = {
-        F: 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
-        M: 'https://models.readyplayer.me/638df5d0d72bffc6fa179441.glb'
-    };
+    const [cameraOrbit, setCameraOrbit] = useState('0deg 75deg 105%');
+    const [fieldOfView, setFieldOfView] = useState('30deg');
+    const modelViewerRef = useRef<any>(null);
+    const { isConnected } = useWebSocketContext();
 
     useEffect(() => {
-        // Check if model-viewer is loaded and AR support
-        const checkModelViewer = () => {
-            if (customElements.get('model-viewer')) {
-                setIsLoading(false);
-
-                // Check AR support after a short delay to allow model-viewer to initialize
-                setTimeout(() => {
-                    if (modelViewerRef.current) {
-                        // Use model-viewer's built-in AR capability check
-                        const canActivate = modelViewerRef.current.canActivateAR;
-                        setIsARSupported(!!canActivate);
-                    }
-                }, 1000);
-            } else {
-                setTimeout(checkModelViewer, 100);
-            }
-        };
-
-        checkModelViewer();
+        // Check if script is already loaded
+        if (customElements.get('model-viewer')) {
+            setScriptLoaded(true);
+        }
     }, []);
 
-    const handleARClick = async () => {
-        const modelViewer = modelViewerRef.current;
-
-        if (!modelViewer) {
-            setError('Model viewer not initialized');
-            return;
-        }
-
-        // Check if AR can be activated
-        const canActivate = modelViewer.canActivateAR;
-
-        if (!canActivate) {
-            setError('AR is not available on this device. Please use a mobile device with ARCore (Android 7.0+) or AR Quick Look (iOS 12+).');
-            return;
-        }
-
-        try {
-            await modelViewer.activateAR?.();
-        } catch (err) {
-            setError('Failed to activate AR mode. Please ensure camera permissions are granted.');
-            console.error('AR activation error:', err);
-        }
-    };
-    const handleModelLoad = () => {
+    const handleModelLoad = useCallback(() => {
         setIsLoading(false);
-        setError(null);
-    };
+        console.log('AR Model loaded successfully');
+    }, []);
 
-    const handleModelError = (event: Event) => {
+    const handleModelError = useCallback((event: any) => {
         setIsLoading(false);
-        setError('Failed to load 3D model. Please try again.');
+        setError('Failed to load 3D model');
         console.error('Model loading error:', event);
+    }, []);
+
+    const resetCamera = () => {
+        setCameraOrbit('0deg 75deg 105%');
+        setFieldOfView('30deg');
+        if (modelViewerRef.current) {
+            modelViewerRef.current.resetTurntableRotation();
+        }
     };
 
-    useEffect(() => {
-        const modelViewer = modelViewerRef.current;
-        if (modelViewer) {
-            modelViewer.addEventListener('load', handleModelLoad);
-            modelViewer.addEventListener('error', handleModelError);
+    const zoomIn = () => {
+        const currentFov = parseFloat(fieldOfView);
+        const newFov = Math.max(10, currentFov - 5);
+        setFieldOfView(`${newFov}deg`);
+    };
 
-            return () => {
-                modelViewer.removeEventListener('load', handleModelLoad);
-                modelViewer.removeEventListener('error', handleModelError);
-            };
+    const zoomOut = () => {
+        const currentFov = parseFloat(fieldOfView);
+        const newFov = Math.min(60, currentFov + 5);
+        setFieldOfView(`${newFov}deg`);
+    };
+
+    const takeScreenshot = async () => {
+        if (modelViewerRef.current) {
+            try {
+                const blob = await modelViewerRef.current.toBlob({ idealAspect: true });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'avatar-screenshot.png';
+                link.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Screenshot failed:', error);
+            }
         }
-    }, []);
+    };
 
     return (
-        <Card className={`w-full ${className}`}>
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">AR Avatar Viewer</CardTitle>
-                <CardDescription>View your AI avatar in augmented reality</CardDescription>
-            </CardHeader>
+        <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-900 via-black to-pink-900">
+            <Script
+                src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
+                type="module"
+                onLoad={() => setScriptLoaded(true)}
+            />
 
-            <CardContent className="space-y-6">
-                {/* Model Viewer */}
-                <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-200" style={{ height: '500px' }}>
-                    {React.createElement('model-viewer', {
-                        ref: modelViewerRef as any,
-                        src: avatarUrls[selectedAvatar as keyof typeof avatarUrls],
-                        alt: "AI Avatar 3D Model",
-                        ar: true,
-                        'ar-modes': "webxr scene-viewer quick-look",
-                        'camera-controls': true,
-                        'touch-action': "pan-y",
-                        'auto-rotate': true,
-                        'shadow-intensity': "1",
-                        'environment-image': "neutral",
-                        exposure: "1",
-                        style: {
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: 'transparent'
-                        }
-                    })}
-
-                    {/* Loading Overlay */}
-                    {isLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
-                            <div className="text-center">
-                                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-                                <p className="text-muted-foreground">Loading 3D model...</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* AR Support Badge */}
-                    {!isLoading && (
-                        <div className="absolute top-4 left-4">
-                            <Badge variant={isARSupported ? 'default' : 'secondary'}>
-                                {isARSupported ? '✓ AR Supported' : 'AR Not Available'}
-                            </Badge>
-                        </div>
-                    )}
-
-                    {/* Instructions */}
-                    {showInstructions && !isLoading && (
-                        <div className="absolute bottom-4 left-4 right-4">
-                            <Alert className="bg-white/90 backdrop-blur-sm">
-                                <Info className="h-4 w-4" />
-                                <AlertDescription className="ml-2 text-xs">
-                                    <strong>Desktop:</strong> Drag to rotate, scroll to zoom
-                                    <br />
-                                    <strong>Mobile:</strong> Tap AR button to view in your space
-                                    <button
-                                        onClick={() => setShowInstructions(false)}
-                                        className="ml-2 text-indigo-600 underline"
-                                    >
-                                        Got it
-                                    </button>
-                                </AlertDescription>
-                            </Alert>
-                        </div>
-                    )}
-                </div>
-
-                {/* AR Controls */}
-                <div className="space-y-4">
-                    {/* AR Button */}
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-[60] bg-gradient-to-b from-black/60 to-transparent p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-white text-xl font-bold">AR Viewer</h2>
+                        {isConnected && (
+                            <span className="px-3 py-1 bg-green-500/20 border border-green-500 text-green-400 text-xs rounded-full">
+                                Connected
+                            </span>
+                        )}
+                    </div>
                     <Button
-                        onClick={handleARClick}
-                        disabled={!isARSupported || isLoading}
-                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                        size="lg"
+                        variant="secondary"
+                        size="icon"
+                        onClick={onClose}
+                        className="rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20"
                     >
-                        <Camera className="mr-2 h-5 w-5" />
-                        {isARSupported ? 'View in AR' : 'AR Not Supported on This Device'}
+                        <X className="h-5 w-5" />
                     </Button>
+                </div>
+            </div>
 
-                    {/* Avatar Selection */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Avatar</Label>
-                            <Select
-                                value={selectedAvatar}
-                                onValueChange={onAvatarChange}
-                                disabled={isLoading}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {avatarOptions.map((avatar) => (
-                                        <SelectItem key={avatar.value} value={avatar.value}>
-                                            {avatar.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+            {/* Control Panel */}
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-black/40 backdrop-blur-xl rounded-full p-2 border border-white/10">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={resetCamera}
+                    className="rounded-full text-white hover:bg-white/20"
+                    title="Reset Camera"
+                >
+                    <RotateCw className="h-5 w-5" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={zoomIn}
+                    className="rounded-full text-white hover:bg-white/20"
+                    title="Zoom In"
+                >
+                    <ZoomIn className="h-5 w-5" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={zoomOut}
+                    className="rounded-full text-white hover:bg-white/20"
+                    title="Zoom Out"
+                >
+                    <ZoomOut className="h-5 w-5" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={takeScreenshot}
+                    className="rounded-full text-white hover:bg-white/20"
+                    title="Take Screenshot"
+                >
+                    <Camera className="h-5 w-5" />
+                </Button>
+            </div>
 
-                        <div className="space-y-2">
-                            <Label>Mood</Label>
-                            <Select
-                                value={selectedMood}
-                                onValueChange={onMoodChange}
-                                disabled={isLoading}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {moodOptions.map((mood) => (
-                                        <SelectItem key={mood.value} value={mood.value}>
-                                            {mood.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+            {/* Loading State */}
+            {(!scriptLoaded || isLoading) && (
+                <div className="flex h-full items-center justify-center">
+                    <div className="text-center">
+                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-purple-400 mb-4" />
+                        <p className="text-white text-lg">
+                            {!scriptLoaded ? 'Loading AR Engine...' : 'Loading 3D Model...'}
+                        </p>
                     </div>
+                </div>
+            )}
 
-                    {/* Quick Actions */}
-                    <div className="flex gap-2">
+            {/* Error State */}
+            {error && (
+                <div className="flex h-full items-center justify-center">
+                    <div className="text-center bg-red-500/10 border border-red-500 rounded-2xl p-8 max-w-md">
+                        <p className="text-red-400 text-lg mb-4">{error}</p>
                         <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                                if (modelViewerRef.current) {
-                                    (modelViewerRef.current as any).resetTurntableRotation?.();
-                                }
-                            }}
+                            onClick={onClose}
+                            className="bg-red-500 hover:bg-red-600 text-white"
                         >
-                            <RotateCw className="mr-2 h-4 w-4" />
-                            Reset View
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => setShowInstructions(!showInstructions)}
-                        >
-                            <Info className="mr-2 h-4 w-4" />
-                            {showInstructions ? 'Hide' : 'Show'} Tips
+                            Close
                         </Button>
                     </div>
                 </div>
+            )}
 
-                {/* Error Display */}
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
+            {/* Model Viewer */}
+            {scriptLoaded && !error && (
+                <model-viewer
+                    ref={modelViewerRef}
+                    src={avatarUrl}
+                    alt="3D Avatar Model"
+                    ar
+                    ar-modes="scene-viewer webxr quick-look"
+                    ar-scale="auto"
+                    camera-controls
+                    camera-orbit={cameraOrbit}
+                    field-of-view={fieldOfView}
+                    tone-mapping="commerce"
+                    shadow-intensity="1"
+                    shadow-softness="0.5"
+                    exposure="1"
+                    environment-image="neutral"
+                    auto-rotate
+                    auto-rotate-delay="1000"
+                    rotation-per-second="30deg"
+                    interaction-prompt="auto"
+                    loading="eager"
+                    reveal="auto"
+                    onLoad={handleModelLoad}
+                    onError={handleModelError}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        display: isLoading ? 'none' : 'block'
+                    }}
+                >
+                    {/* AR Button */}
+                    <button
+                        slot="ar-button"
+                        className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-4 rounded-full font-bold shadow-2xl transform active:scale-95 transition-all flex items-center gap-3 cursor-pointer border-2 border-white/20"
+                    >
+                        <Maximize2 className="h-5 w-5" />
+                        View in Your Space
+                    </button>
 
-                {/* Device Info */}
-                {!isARSupported && !isLoading && (
-                    <Alert>
-                        <AlertDescription className="text-xs">
-                            <strong>Desktop Mode:</strong> AR camera view requires a mobile device with ARCore (Android 7.0+) or AR Quick Look (iOS 12+).
-                            <br />
-                            You can interact with the 3D model here using mouse controls (drag to rotate, scroll to zoom).
-                        </AlertDescription>
-                    </Alert>
-                )}
-            </CardContent>
-        </Card>
+                    {/* Loading Progress */}
+                    <div slot="progress-bar" className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-2 bg-white/20 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"></div>
+                    </div>
+                </model-viewer>
+            )}
+
+            {/* Instructions */}
+            {scriptLoaded && !isLoading && !error && (
+                <div className="absolute bottom-4 left-4 right-4 z-[60] text-center">
+                    <p className="text-white/60 text-sm">
+                        Drag to rotate • Pinch to zoom • Tap AR button to view in your space
+                    </p>
+                </div>
+            )}
+        </div>
     );
 };
 
