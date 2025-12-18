@@ -879,7 +879,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             "word_timings": initial_timings,
                             "sample_rate": 24000,
                             "method": "native_kokoro_timing",
-                            "modality": "text_multimodal" if image_data else "text_only",
+                            "modality": (
+                                "text_multimodal" if image_data else "text_only"
+                            ),
                         }
 
                         await websocket.send_text(json.dumps(audio_message))
@@ -909,25 +911,34 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                                                 text_chunk
                                             )
                                         )
-                                        manager.set_task(client_id, "tts", chunk_tts_task)
+                                        manager.set_task(
+                                            client_id, "tts", chunk_tts_task
+                                        )
 
                                         chunk_tts_result = await chunk_tts_task
                                         if (
                                             isinstance(chunk_tts_result, tuple)
                                             and len(chunk_tts_result) == 2
                                         ):
-                                            chunk_audio, chunk_timings = chunk_tts_result
+                                            chunk_audio, chunk_timings = (
+                                                chunk_tts_result
+                                            )
                                         else:
                                             chunk_audio = chunk_tts_result
                                             chunk_timings = []
 
-                                        if chunk_audio is not None and len(chunk_audio) > 0:
+                                        if (
+                                            chunk_audio is not None
+                                            and len(chunk_audio) > 0
+                                        ):
                                             audio_bytes = (
-                                                (chunk_audio * 32767).astype(np.int16).tobytes()
+                                                (chunk_audio * 32767)
+                                                .astype(np.int16)
+                                                .tobytes()
                                             )
-                                            base64_audio = base64.b64encode(audio_bytes).decode(
-                                                "utf-8"
-                                            )
+                                            base64_audio = base64.b64encode(
+                                                audio_bytes
+                                            ).decode("utf-8")
 
                                             chunk_audio_message = {
                                                 "audio": base64_audio,
@@ -1281,7 +1292,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             await manager.cancel_current_tasks(client_id)
 
                             text = message["text_message"]
-                            
+
                             # Check if image is also included
                             image_data = None
                             if "image" in message:
