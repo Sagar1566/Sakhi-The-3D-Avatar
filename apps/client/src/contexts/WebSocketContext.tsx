@@ -73,9 +73,21 @@ interface WebSocketProviderProps {
   serverUrl?: string;
 }
 
+// Automatically use localhost in development, Render in production
+const getDefaultServerUrl = () => {
+  if (typeof window !== 'undefined') {
+    // In browser
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'ws://localhost:8000/ws/test-client';
+    }
+  }
+  // Production (Vercel or any deployed environment)
+  return 'wss://sakhi-the-3d-avatar-2.onrender.com/ws/test-client';
+};
+
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   children,
-  serverUrl = 'ws://localhost:8000/ws/test-client'
+  serverUrl = getDefaultServerUrl()
 }) => {
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
