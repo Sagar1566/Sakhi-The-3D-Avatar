@@ -8,12 +8,16 @@ import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({
   variable: '--font-inter',
-  subsets: ['latin']
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial']
 });
 
 const robotoMono = Roboto_Mono({
   variable: '--font-roboto-mono',
-  subsets: ['latin']
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['monospace']
 });
 
 export const metadata: Metadata = {
