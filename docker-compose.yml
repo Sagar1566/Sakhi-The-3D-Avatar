@@ -4,8 +4,8 @@ services:
   # Next.js Client
   client:
     build:
-      context: .
-      dockerfile: apps/client/Dockerfile
+      context: ./apps/client
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -21,8 +21,8 @@ services:
   # FastAPI Server
   server:
     build:
-      context: .
-      dockerfile: apps/server/Dockerfile
+      context: ./apps/server
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:

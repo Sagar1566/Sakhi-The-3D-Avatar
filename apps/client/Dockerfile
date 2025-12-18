@@ -7,9 +7,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/client/package.json ./apps/client/
+# Copy package files (from apps/client)
+COPY package.json ./
 
 # Install dependencies
 FROM base AS deps
@@ -18,9 +17,7 @@ RUN pnpm install --frozen-lockfile
 # Build stage
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY apps/client ./apps/client
-
-WORKDIR /app/apps/client
+COPY . .
 
 # Build the application
 RUN pnpm build
@@ -37,9 +34,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-COPY --from=builder /app/apps/client/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/client/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/client/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 

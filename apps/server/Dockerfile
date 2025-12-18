@@ -13,8 +13,8 @@ ENV PATH="/root/.cargo/bin:$PATH"
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
-COPY apps/server/pyproject.toml apps/server/uv.lock ./
+# Copy dependency files (relative to apps/server)
+COPY pyproject.toml uv.lock ./
 
 # Install dependencies
 RUN uv sync --frozen
@@ -33,8 +33,8 @@ WORKDIR /app
 COPY --from=base /root/.cargo/bin/uv /usr/local/bin/
 COPY --from=base /app/.venv /app/.venv
 
-# Copy application code
-COPY apps/server/main.py ./
+# Copy application code (relative to apps/server)
+COPY main.py ./
 
 # Create directory for received images
 RUN mkdir -p /app/received_images
