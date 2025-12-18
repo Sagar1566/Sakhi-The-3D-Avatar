@@ -6,14 +6,6 @@ import { X, Loader2, Camera, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide
 import Script from 'next/script';
 import { useWebSocketContext } from '@/contexts/WebSocketContext';
 
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'model-viewer': any;
-        }
-    }
-}
-
 interface ARViewerProps {
     onClose: () => void;
     avatarUrl?: string;

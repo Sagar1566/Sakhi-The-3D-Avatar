@@ -233,25 +233,25 @@ const VoiceBlob: React.FC<{
 
         {/* Pulsing neon border */}
         <div className={`absolute inset-0 rounded border transition-all duration-300 ${transmissionMode === 'audio+image'
-            ? 'border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.4),inset_0_0_15px_rgba(168,85,247,0.1)] animate-pulse'
-            : isAboveThreshold
-              ? 'border-green-400/40 shadow-[0_0_15px_rgba(34,197,94,0.4),inset_0_0_15px_rgba(34,197,94,0.1)] animate-pulse'
-              : 'border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+          ? 'border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.4),inset_0_0_15px_rgba(168,85,247,0.1)] animate-pulse'
+          : isAboveThreshold
+            ? 'border-green-400/40 shadow-[0_0_15px_rgba(34,197,94,0.4),inset_0_0_15px_rgba(34,197,94,0.1)] animate-pulse'
+            : 'border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
           }`} />
 
         {/* Energy value with glitch effect */}
         <div className="relative flex items-baseline gap-1.5 z-10">
           <div className="flex items-center gap-1">
             <div className={`w-1.5 h-1.5 rounded-sm transition-all duration-200 ${isAboveThreshold
-                ? 'bg-green-400 shadow-[0_0_6px_rgba(34,197,94,1)] animate-pulse'
-                : 'bg-cyan-500/50'
+              ? 'bg-green-400 shadow-[0_0_6px_rgba(34,197,94,1)] animate-pulse'
+              : 'bg-cyan-500/50'
               }`} />
             <div
               className={`font-mono text-base font-bold tracking-[0.15em] transition-all duration-200 drop-shadow-[0_0_8px_currentColor] ${transmissionMode === 'audio+image'
-                  ? 'text-purple-400'
-                  : isAboveThreshold
-                    ? 'text-green-400'
-                    : 'text-cyan-400'
+                ? 'text-purple-400'
+                : isAboveThreshold
+                  ? 'text-green-400'
+                  : 'text-cyan-400'
                 }`}
             >
               {energy.toFixed(4)}
@@ -287,8 +287,8 @@ const VoiceBlob: React.FC<{
                   {transmissionMode === 'audio+image' ? '🎥' : '🎤'}
                 </span>
                 <div className={`w-1 h-1 rounded-full animate-pulse ${transmissionMode === 'audio+image'
-                    ? 'bg-purple-400 shadow-[0_0_4px_rgba(168,85,247,0.8)]'
-                    : 'bg-blue-400 shadow-[0_0_4px_rgba(59,130,246,0.8)]'
+                  ? 'bg-purple-400 shadow-[0_0_4px_rgba(168,85,247,0.8)]'
+                  : 'bg-blue-400 shadow-[0_0_4px_rgba(59,130,246,0.8)]'
                   }`} />
               </div>
             </>
@@ -768,7 +768,7 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
     return (
       <div className="relative inline-flex items-center justify-center">
         {/* Voice Activity Blob - Floating above */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-4 pointer-events-none transition-opacity duration-300 ${isListening ? 'opacity-100' : 'opacity-0 z-50'}`}>
+        <div className={`absolute bottom-full left-0 mb-4 pointer-events-none transition-opacity duration-300 ${isListening ? 'opacity-100' : 'opacity-0 z-50'}`}>
           <div className="w-[120px] h-[100px] flex items-end justify-center">
             <VoiceBlob
               energy={currentEnergy}

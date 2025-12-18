@@ -18,7 +18,8 @@ const robotoMono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: 'Sakhi AI',
-  description: 'Your intelligent 3D avatar companion'
+  description: 'Your intelligent 3D avatar companion powered by advanced AI and real-time interaction capabilities.',
+  keywords: ['AI', 'Avatar', '3D', 'Assistant', 'Sakhi', 'Interactive', 'Voice Control', 'AR']
 };
 
 export default function RootLayout({
