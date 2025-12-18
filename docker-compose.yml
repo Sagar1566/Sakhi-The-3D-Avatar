@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Next.js Client
+  client:
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_WS_URL=ws://server:8000/ws/test-client
+      - NEXT_PUBLIC_API_URL=http://server:8000
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - talkmateai-network
+
+  # FastAPI Server
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CORS_ORIGINS=http://localhost:3000,http://client:3000
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    networks:
+      - talkmateai-network
+    volumes:
+      - ./apps/server/received_images:/app/received_images
+
+networks:
+  talkmateai-network:
+    driver: bridge
+
+volumes:
+  server-data:

@@ -1,0 +1,9 @@
+﻿
+./src/components/CameraStream.tsx
+78:6  Warning: React Hook useCallback has a missing dependency: 'selectedDeviceId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+196:6  Warning: React Hook useEffect has a missing dependency: 'getDevices'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/TalkingHead.tsx
+417:6  Warning: React Hook useEffect has missing dependencies: 'loadAvatar', 'selectedAvatar', and 'selectedMood'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

@@ -40,7 +40,11 @@ interface WebSocketContextType {
   onAudioReceived: (
     callback: (
       audioData: string,
-      timingData?: any,
+      timingData?: {
+        words: string[];
+        word_times: number[];
+        word_durations: number[];
+      },
       sampleRate?: number,
       method?: string
     ) => void
@@ -81,7 +85,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const audioReceivedCallbackRef = useRef<
     | ((
       audioData: string,
-      timingData?: any,
+      timingData?: {
+        words: string[];
+        word_times: number[];
+        word_durations: number[];
+      },
       sampleRate?: number,
       method?: string
     ) => void)
@@ -123,7 +131,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
             interruptCallbackRef.current?.();
           } else if (data.audio) {
             // Handle audio with native timing
-            let timingData = null;
+            let timingData:
+              | {
+                words: string[];
+                word_times: number[];
+                word_durations: number[];
+              }
+              | undefined = undefined;
 
             if (data.word_timings) {
               // Convert to TalkingHead format
@@ -157,7 +171,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
           } else if (data.type === 'ping') {
             // Keepalive ping - no action needed
           }
-        } catch (e) {
+        } catch {
           console.log('Non-JSON message:', event.data);
         }
       };
@@ -173,7 +187,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         statusChangeCallbackRef.current?.('disconnected');
         console.log('WebSocket disconnected');
       };
-    } catch (error) {
+    } catch {
       setIsConnecting(false);
       errorCallbackRef.current?.('Failed to connect to WebSocket server');
     }
@@ -242,7 +256,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const sendText = useCallback(
     (text: string, imageData?: string) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const message: any = {
+        const message: {
+          text_message: string;
+          image?: string;
+        } = {
           text_message: text
         };
 
@@ -262,7 +279,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     (
       callback: (
         audioData: string,
-        timingData?: any,
+        timingData?: {
+          words: string[];
+          word_times: number[];
+          word_durations: number[];
+        },
         sampleRate?: number,
         method?: string
       ) => void

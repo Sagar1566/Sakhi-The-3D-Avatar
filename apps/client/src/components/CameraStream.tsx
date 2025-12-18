@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Camera, CameraOff, Move, Maximize2, Minimize2, X } from 'lucide-react';
+import { Camera, CameraOff, Maximize2, Minimize2, X } from 'lucide-react';
 
 interface CameraStreamProps {
   className?: string;
@@ -101,9 +101,10 @@ const CameraStream: React.FC<CameraStreamProps> = ({
       }
 
       setIsStreaming(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error starting camera:', error);
-      setError(`Failed to start camera: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Failed to start camera: ${errorMessage}`);
       setIsStreaming(false);
     }
   }, [selectedDeviceId]);
@@ -219,11 +220,9 @@ const CameraStream: React.FC<CameraStreamProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed z-50 overflow-hidden rounded-lg bg-white shadow-2xl ${
-        isExpanded ? 'h-72 w-96' : 'h-36 w-48'
-      } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${
-        isDragging ? '' : 'transition-all duration-200'
-      } ${className}`}
+      className={`fixed z-50 overflow-hidden rounded-lg bg-white shadow-2xl ${isExpanded ? 'h-72 w-96' : 'h-36 w-48'
+        } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? '' : 'transition-all duration-200'
+        } ${className}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -342,11 +341,10 @@ export const CameraToggleButton: React.FC<{
     <>
       <button
         onClick={() => setShowCamera(!showCamera)}
-        className={`fixed right-6 bottom-6 z-40 rounded-full p-4 text-white shadow-lg transition-colors ${
-          showCamera
+        className={`fixed right-6 bottom-6 z-40 rounded-full p-4 text-white shadow-lg transition-colors ${showCamera
             ? 'bg-red-500 hover:bg-red-600'
             : 'bg-blue-500 hover:bg-blue-600'
-        }`}
+          }`}
         title={showCamera ? 'Close Camera' : 'Open Camera'}
       >
         {showCamera ? <CameraOff size={24} /> : <Camera size={24} />}

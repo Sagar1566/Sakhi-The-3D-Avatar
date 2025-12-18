@@ -32,14 +32,37 @@ interface TalkingHeadProps {
   cameraStream?: MediaStream | null;
 }
 
-const TalkingHead: React.FC<TalkingHeadProps> = ({
-  className = '',
-  cameraStream
-}) => {
+const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
   const avatarRef = useRef<HTMLDivElement>(null);
-  const headRef = useRef<any>(null);
+  const headRef = useRef<{
+    speakAudio: (data: {
+      audio: AudioBuffer;
+      words?: string[];
+      wtimes?: number[];
+      wdurations?: number[];
+    }) => void;
+    stop: () => void;
+    showAvatar: (config: {
+      url: string;
+      body: string;
+      avatarMood: string;
+      lipsyncLang: string;
+    }) => Promise<void>;
+    setMood: (mood: string) => void;
+  } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioQueueRef = useRef<any[]>([]);
+  const audioQueueRef = useRef<
+    Array<{
+      buffer: AudioBuffer;
+      timingData?: {
+        words: string[];
+        word_times: number[];
+        word_durations: number[];
+      };
+      duration: number;
+      method: string;
+    }>
+  >([]);
   const isPlayingAudioRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -127,6 +150,12 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
     setIsSpeaking(true);
 
     const audioItem = audioQueueRef.current.shift();
+    if (!audioItem) {
+      isPlayingAudioRef.current = false;
+      setIsSpeaking(false);
+      return;
+    }
+
     console.log('Playing audio item:', audioItem);
 
     try {
@@ -184,7 +213,11 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
   const handleAudioReceived = useCallback(
     async (
       base64Audio: string,
-      timingData?: any,
+      timingData?: {
+        words: string[];
+        word_times: number[];
+        word_durations: number[];
+      },
       sampleRate = 24000,
       method = 'unknown'
     ) => {
@@ -309,7 +342,9 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
       showStatus('Failed to load TalkingHead library', 'error');
     };
 
-    if ((window as any).TalkingHead) {
+    if (
+      (window as Window & { TalkingHead?: unknown }).TalkingHead
+    ) {
       setScriptsLoaded(true);
       return;
     }
@@ -332,9 +367,16 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
         setIsLoading(true);
         showStatus('Initializing avatar...', 'info');
 
-        const TalkingHead = (window as any).TalkingHead;
-        if (!TalkingHead) {
-          throw new Error('TalkingHead library not loaded');
+        const TalkingHead = (
+          window as Window & {
+            TalkingHead?: new (
+              element: HTMLDivElement,
+              config: Record<string, unknown>
+            ) => typeof headRef.current;
+          }
+        ).TalkingHead;
+        if (!TalkingHead || !avatarRef.current) {
+          throw new Error('TalkingHead library not loaded or avatar ref not available');
         }
 
         headRef.current = new TalkingHead(avatarRef.current, {
@@ -354,9 +396,10 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
 
         // Auto-connect to WebSocket
         connect();
-      } catch (error: any) {
+      } catch (error) {
         setIsLoading(false);
-        showStatus(`Failed to initialize: ${error.message}`, 'error');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        showStatus(`Failed to initialize: ${errorMessage}`, 'error');
       }
     };
 
@@ -386,8 +429,9 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({
         avatarMood: selectedMood,
         lipsyncLang: 'en'
       });
-    } catch (error: any) {
-      showStatus(`Failed to load avatar: ${error.message}`, 'error');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showStatus(`Failed to load avatar: ${errorMessage}`, 'error');
     }
   };
 

@@ -1,0 +1,144 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Lint and format check
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint client
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+  # Build client
+  build-client:
+    name: Build Client
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build client
+        run: pnpm build:client
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-build
+          path: apps/client/.next
+
+  # Build server
+  build-server:
+    name: Build Server
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: |
+          cd apps/server
+          uv sync
+
+      - name: Format check (Python)
+        run: |
+          cd apps/server
+          uv run black --check .
+
+  # Docker build (only on main branch)
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-client, build-server]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/client/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/talkmateai-client:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/talkmateai-client:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/talkmateai-client:buildcache,mode=max
+
+      - name: Build and push server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/talkmateai-server:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/talkmateai-server:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/talkmateai-server:buildcache,mode=max
+
+  # Deploy (optional - configure based on your deployment platform)
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Add your deployment commands here"
+          # Example for Railway:
+          # curl -X POST ${{ secrets.RAILWAY_WEBHOOK_URL }}
+          
+          # Example for custom server:
+          # ssh user@server 'cd /app && docker-compose pull && docker-compose up -d'

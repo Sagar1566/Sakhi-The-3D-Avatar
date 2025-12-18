@@ -43,10 +43,9 @@ interface VoiceActivityDetectorProps {
 // Enhanced Voice Blob Component with transmission feedback
 const VoiceBlob: React.FC<{
   energy: number;
-  isActive: boolean;
   threshold: number;
   transmissionMode: 'audio' | 'audio+image' | 'none';
-}> = ({ energy, isActive, threshold, transmissionMode }) => {
+}> = ({ energy, threshold, transmissionMode }) => {
   const [animationTime, setAnimationTime] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -210,13 +209,12 @@ const VoiceBlob: React.FC<{
 
       <div className="text-center">
         <div
-          className={`font-mono text-2xl font-bold transition-colors duration-200 ${
-            transmissionMode === 'audio+image'
+          className={`font-mono text-2xl font-bold transition-colors duration-200 ${transmissionMode === 'audio+image'
               ? 'text-purple-600'
               : isAboveThreshold
                 ? 'text-green-600'
                 : 'text-blue-600'
-          }`}
+            }`}
         >
           {energy.toFixed(4)}
         </div>
@@ -230,13 +228,12 @@ const VoiceBlob: React.FC<{
           </Badge>
           <Badge
             variant={transmissionMode === 'audio+image' ? 'default' : 'outline'}
-            className={`text-xs ${
-              transmissionMode === 'audio+image'
+            className={`text-xs ${transmissionMode === 'audio+image'
                 ? 'bg-purple-500 hover:bg-purple-600'
                 : transmissionMode === 'audio'
                   ? 'bg-blue-500 hover:bg-blue-600'
                   : ''
-            }`}
+              }`}
           >
             {transmissionMode === 'audio+image'
               ? '🎥 Audio + Image'
@@ -333,7 +330,6 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
     isConnected,
     connect,
     sendAudioSegment,
-    sendImage,
     sendAudioWithImage
   } = useWebSocketContext();
 
@@ -720,33 +716,29 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
         <div className="flex justify-center space-x-8">
           <div className="text-center">
             <div
-              className={`inline-block h-3 w-3 rounded-full ${
-                isConnected ? 'bg-green-500' : 'bg-gray-300'
-              }`}
+              className={`inline-block h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'
+                }`}
             />
             <p className="text-muted-foreground mt-1 text-sm">Server</p>
           </div>
           <div className="text-center">
             <div
-              className={`inline-block h-3 w-3 rounded-full ${
-                isListening ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
+              className={`inline-block h-3 w-3 rounded-full ${isListening ? 'bg-blue-500' : 'bg-gray-300'
+                }`}
             />
             <p className="text-muted-foreground mt-1 text-sm">Microphone</p>
           </div>
           <div className="text-center">
             <div
-              className={`inline-block h-3 w-3 rounded-full ${
-                isSpeechActive ? 'bg-orange-500' : 'bg-gray-300'
-              }`}
+              className={`inline-block h-3 w-3 rounded-full ${isSpeechActive ? 'bg-orange-500' : 'bg-gray-300'
+                }`}
             />
             <p className="text-muted-foreground mt-1 text-sm">Speech Active</p>
           </div>
           <div className="text-center">
             <div
-              className={`inline-block h-3 w-3 rounded-full ${
-                cameraStream ? 'bg-purple-500' : 'bg-gray-300'
-              }`}
+              className={`inline-block h-3 w-3 rounded-full ${cameraStream ? 'bg-purple-500' : 'bg-gray-300'
+                }`}
             />
             <p className="text-muted-foreground mt-1 text-sm">Camera</p>
           </div>
@@ -756,7 +748,6 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
         <div className="flex justify-center">
           <VoiceBlob
             energy={currentEnergy}
-            isActive={isSpeechActive}
             threshold={config.energyThreshold}
             transmissionMode={transmissionMode}
           />

@@ -1,7 +1,6 @@
 # Dependencies
 node_modules/
 .pnpm-store/
-pnpm-lock.yaml
 
 # Python
 __pycache__/
@@ -23,7 +22,6 @@ build/
 
 # Runtime generated
 apps/server/received_images/
-*.log
 
 # IDE
 .idea/
@@ -41,11 +39,36 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 
 # Testing
 coverage/
 .nyc_output/
+.pytest_cache/
 
 # Misc
 *.bak
 *.cache
+
+# Production
+.vercel
+.netlify
+.railway
+
+# Docker
+.dockerignore
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
