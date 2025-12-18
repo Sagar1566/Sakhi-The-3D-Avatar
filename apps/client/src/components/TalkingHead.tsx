@@ -414,7 +414,8 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '' }) => {
         }
       }
     };
-  }, [scriptsLoaded, connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scriptsLoaded]);
 
   const loadAvatar = async (gender: string = 'F') => {
     const avatarUrls = {

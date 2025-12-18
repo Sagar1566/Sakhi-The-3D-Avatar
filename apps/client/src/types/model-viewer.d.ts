@@ -1,8 +1,9 @@
 // Type declarations for model-viewer custom element
-declare namespace JSX {
-    interface IntrinsicElements {
-        'model-viewer': React.DetailedHTMLProps<
-            React.HTMLAttributes<HTMLElement> & {
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'model-viewer': {
+                ref?: any;
                 src?: string;
                 alt?: string;
                 ar?: boolean;
@@ -10,13 +11,13 @@ declare namespace JSX {
                 'camera-controls'?: boolean;
                 'touch-action'?: string;
                 'auto-rotate'?: boolean;
-                'shadow-intensity'?: string;
+                'shadow-intensity'?: string | number;
                 'environment-image'?: string;
-                exposure?: string;
+                exposure?: string | number;
                 poster?: string;
                 loading?: 'auto' | 'lazy' | 'eager';
                 reveal?: 'auto' | 'interaction' | 'manual';
-                'auto-rotate-delay'?: string;
+                'auto-rotate-delay'?: string | number;
                 'rotation-per-second'?: string;
                 'interaction-prompt'?: 'auto' | 'when-focused' | 'none';
                 'camera-orbit'?: string;
@@ -26,9 +27,12 @@ declare namespace JSX {
                 'max-camera-orbit'?: string;
                 'min-field-of-view'?: string;
                 'max-field-of-view'?: string;
-            },
-            HTMLElement
-        >;
+                className?: string;
+                style?: { [key: string]: any };
+                onLoad?: () => void;
+                onError?: () => void;
+            };
+        }
     }
 }
 

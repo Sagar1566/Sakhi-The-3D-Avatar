@@ -93,6 +93,14 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
+  // Reconnection state
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 10;
+  const shouldReconnectRef = useRef(true);
+  const lastPingRef = useRef<number>(Date.now());
+  const pingCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Callback refs
   const audioReceivedCallbackRef = useRef<
     | ((
@@ -113,26 +121,80 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     ((status: 'connected' | 'disconnected' | 'connecting') => void) | null
   >(null);
 
+  // Use ref to avoid circular dependency
+  const connectRef = useRef<(() => Promise<void>) | null>(null);
+
+  const scheduleReconnect = useCallback(() => {
+    if (!shouldReconnectRef.current) return;
+
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      console.error('Max reconnection attempts reached');
+      errorCallbackRef.current?.('Failed to reconnect after multiple attempts');
+      return;
+    }
+
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+    console.log(`Scheduling reconnection attempt ${reconnectAttemptsRef.current + 1} in ${delay}ms`);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectAttemptsRef.current++;
+      connectRef.current?.();
+    }, delay);
+  }, []);
+
   const connect = useCallback(async () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    // Clear any existing connection
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onopen = null;
+      try {
+        wsRef.current.close();
+      } catch (e) {
+        console.error('Error closing existing WebSocket:', e);
+      }
+      wsRef.current = null;
+    }
 
     try {
       setIsConnecting(true);
       statusChangeCallbackRef.current?.('connecting');
+      console.log(`Connecting to WebSocket: ${serverUrl}`);
 
       wsRef.current = new WebSocket(serverUrl);
 
       wsRef.current.onopen = () => {
         setIsConnected(true);
         setIsConnecting(false);
+        reconnectAttemptsRef.current = 0; // Reset reconnection counter on successful connection
         statusChangeCallbackRef.current?.('connected');
-        console.log('WebSocket connected');
+        lastPingRef.current = Date.now();
+        console.log('WebSocket connected successfully');
+
+        // Start ping check interval
+        if (pingCheckIntervalRef.current) {
+          clearInterval(pingCheckIntervalRef.current);
+        }
+        pingCheckIntervalRef.current = setInterval(() => {
+          const timeSinceLastPing = Date.now() - lastPingRef.current;
+          // If no ping received in 60 seconds, consider connection stale
+          if (timeSinceLastPing > 60000 && wsRef.current?.readyState === WebSocket.OPEN) {
+            console.warn('No ping received in 60s, reconnecting...');
+            wsRef.current?.close();
+          }
+        }, 15000); // Check every 15 seconds
       };
 
       wsRef.current.onmessage = (event) => {
         try {
           const data: WebSocketMessage = JSON.parse(event.data);
-          console.log('WebSocket message received:', data);
+
+          // Update last ping time for any message (server is alive)
+          lastPingRef.current = Date.now();
 
           if (data.status === 'connected') {
             console.log(
@@ -181,7 +243,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
           } else if (data.error) {
             errorCallbackRef.current?.(data.error);
           } else if (data.type === 'ping') {
-            // Keepalive ping - no action needed
+            // Keepalive ping received - connection is healthy
+            console.log('Received keepalive ping');
           }
         } catch {
           console.log('Non-JSON message:', event.data);
@@ -190,27 +253,81 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
       wsRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
-        errorCallbackRef.current?.('WebSocket connection error');
+        setIsConnecting(false);
       };
 
-      wsRef.current.onclose = () => {
+      wsRef.current.onclose = (event) => {
         setIsConnected(false);
         setIsConnecting(false);
         statusChangeCallbackRef.current?.('disconnected');
-        console.log('WebSocket disconnected');
+
+        // Clear ping check interval
+        if (pingCheckIntervalRef.current) {
+          clearInterval(pingCheckIntervalRef.current);
+          pingCheckIntervalRef.current = null;
+        }
+
+        console.log(`WebSocket disconnected (code: ${event.code}, reason: ${event.reason})`);
+
+        // Attempt to reconnect if not a normal closure
+        if (shouldReconnectRef.current && event.code !== 1000) {
+          scheduleReconnect();
+        }
       };
-    } catch {
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
       setIsConnecting(false);
       errorCallbackRef.current?.('Failed to connect to WebSocket server');
+
+      // Schedule reconnection on connection failure
+      if (shouldReconnectRef.current) {
+        scheduleReconnect();
+      }
     }
   }, [serverUrl]);
 
+  // Store connect in ref for scheduleReconnect to use
+  connectRef.current = connect;
+
   const disconnect = useCallback(() => {
+    shouldReconnectRef.current = false;
+
+    // Clear reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // Clear ping check interval
+    if (pingCheckIntervalRef.current) {
+      clearInterval(pingCheckIntervalRef.current);
+      pingCheckIntervalRef.current = null;
+    }
+
+    // Close WebSocket
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onopen = null;
+      try {
+        wsRef.current.close(1000, 'Client disconnecting');
+      } catch (e) {
+        console.error('Error closing WebSocket:', e);
+      }
       wsRef.current = null;
     }
+
+    setIsConnected(false);
+    setIsConnecting(false);
   }, []);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      disconnect();
+    };
+  }, [disconnect]);
 
   const sendAudioSegment = useCallback((audioData: ArrayBuffer) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

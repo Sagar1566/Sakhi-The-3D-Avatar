@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Maximize2, Minimize2, RotateCw, Info } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -143,24 +144,24 @@ const ARViewer: React.FC<ARViewerProps> = ({
             <CardContent className="space-y-6">
                 {/* Model Viewer */}
                 <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-200" style={{ height: '500px' }}>
-                    <model-viewer
-                        ref={modelViewerRef as any}
-                        src={avatarUrls[selectedAvatar as keyof typeof avatarUrls]}
-                        alt="AI Avatar 3D Model"
-                        ar
-                        ar-modes="webxr scene-viewer quick-look"
-                        camera-controls
-                        touch-action="pan-y"
-                        auto-rotate
-                        shadow-intensity="1"
-                        environment-image="neutral"
-                        exposure="1"
-                        style={{
+                    {React.createElement('model-viewer', {
+                        ref: modelViewerRef as any,
+                        src: avatarUrls[selectedAvatar as keyof typeof avatarUrls],
+                        alt: "AI Avatar 3D Model",
+                        ar: true,
+                        'ar-modes': "webxr scene-viewer quick-look",
+                        'camera-controls': true,
+                        'touch-action': "pan-y",
+                        'auto-rotate': true,
+                        'shadow-intensity': "1",
+                        'environment-image': "neutral",
+                        exposure: "1",
+                        style: {
                             width: '100%',
                             height: '100%',
                             backgroundColor: 'transparent'
-                        }}
-                    />
+                        }
+                    })}
 
                     {/* Loading Overlay */}
                     {isLoading && (
