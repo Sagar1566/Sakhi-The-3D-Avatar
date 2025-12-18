@@ -100,8 +100,8 @@ const TextInput: React.FC<TextInputProps> = ({ cameraStream }) => {
                             size="sm"
                             onClick={() => setIncludeImage(!includeImage)}
                             className={`h-8 transition-all duration-300 ${includeImage
-                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600'
-                                    : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600'
+                                : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
                                 }`}
                         >
                             <Camera size={14} className="mr-1" />
@@ -111,8 +111,8 @@ const TextInput: React.FC<TextInputProps> = ({ cameraStream }) => {
                     <Badge
                         variant={isConnected ? 'default' : 'secondary'}
                         className={`text-xs ${isConnected
-                                ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                                : 'bg-gray-300'
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                            : 'bg-gray-300'
                             }`}
                     >
                         {isConnected ? '● Connected' : '○ Disconnected'}

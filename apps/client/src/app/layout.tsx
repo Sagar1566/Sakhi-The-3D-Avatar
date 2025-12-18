@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Import map for TalkingHead ES modules */}
         <script
@@ -49,6 +49,14 @@ export default function RootLayout({
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
       >
         <WebSocketProvider>{children}</WebSocketProvider>
+
+        {/* Load model-viewer for AR support */}
+        <Script
+          id="load-model-viewer"
+          src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
+          type="module"
+          strategy="beforeInteractive"
+        />
 
         {/* Load TalkingHead library */}
         <Script

@@ -3,12 +3,17 @@
 import { useState } from 'react';
 import VoiceActivityDetector from '@/components/VoiceActivityDetector';
 import TalkingHead from '@/components/TalkingHead';
+import ARViewer from '@/components/ARViewer';
 import TextInput from '@/components/TextInput';
 import { CameraToggleButton } from '@/components/CameraStream';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, View } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [isARMode, setIsARMode] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState('F');
+  const [selectedMood, setSelectedMood] = useState('neutral');
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
@@ -35,9 +40,33 @@ export default function Home() {
           </p>
         </div>
 
+        {/* AR Mode Toggle */}
+        <div className="mb-6 flex justify-center">
+          <div className="inline-flex items-center gap-3 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-xl">
+            <Button
+              variant={!isARMode ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setIsARMode(false)}
+              className={!isARMode ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : ''}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              3D Avatar
+            </Button>
+            <Button
+              variant={isARMode ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setIsARMode(true)}
+              className={isARMode ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : ''}
+            >
+              <View className="mr-2 h-4 w-4" />
+              AR Mode
+            </Button>
+          </div>
+        </div>
+
         {/* Main Content Layout */}
         <div className="mb-8 grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-2">
-          {/* TalkingHead Component */}
+          {/* Avatar Component - TalkingHead or AR Viewer */}
           <div className="order-1">
             <div className="group relative overflow-hidden rounded-3xl bg-white/80 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:shadow-indigo-200/50 md:p-8">
               {/* Gradient Border Effect */}
@@ -47,10 +76,19 @@ export default function Home() {
                 <div className="mb-4 flex items-center gap-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
                   <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-                    AI Avatar
+                    {isARMode ? 'AR Avatar' : 'AI Avatar'}
                   </h2>
                 </div>
-                <TalkingHead cameraStream={cameraStream} />
+                {isARMode ? (
+                  <ARViewer
+                    selectedAvatar={selectedAvatar}
+                    selectedMood={selectedMood}
+                    onAvatarChange={setSelectedAvatar}
+                    onMoodChange={setSelectedMood}
+                  />
+                ) : (
+                  <TalkingHead cameraStream={cameraStream} />
+                )}
               </div>
             </div>
           </div>

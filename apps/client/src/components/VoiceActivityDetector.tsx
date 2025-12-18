@@ -210,10 +210,10 @@ const VoiceBlob: React.FC<{
       <div className="text-center">
         <div
           className={`font-mono text-2xl font-bold transition-colors duration-200 ${transmissionMode === 'audio+image'
-              ? 'text-purple-600'
-              : isAboveThreshold
-                ? 'text-green-600'
-                : 'text-blue-600'
+            ? 'text-purple-600'
+            : isAboveThreshold
+              ? 'text-green-600'
+              : 'text-blue-600'
             }`}
         >
           {energy.toFixed(4)}
@@ -229,10 +229,10 @@ const VoiceBlob: React.FC<{
           <Badge
             variant={transmissionMode === 'audio+image' ? 'default' : 'outline'}
             className={`text-xs ${transmissionMode === 'audio+image'
-                ? 'bg-purple-500 hover:bg-purple-600'
-                : transmissionMode === 'audio'
-                  ? 'bg-blue-500 hover:bg-blue-600'
-                  : ''
+              ? 'bg-purple-500 hover:bg-purple-600'
+              : transmissionMode === 'audio'
+                ? 'bg-blue-500 hover:bg-blue-600'
+                : ''
               }`}
           >
             {transmissionMode === 'audio+image'
