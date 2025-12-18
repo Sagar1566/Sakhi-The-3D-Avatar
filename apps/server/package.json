@@ -1,0 +1,11 @@
+{
+  "name": "@talkmateai/server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "python -m uv run uvicorn main:app --reload --reload-exclude .venv",
+    "start": "python -m uv run uvicorn main:app",
+    "format": "python -m uv run black .",
+    "format:check": "python -m uv run black --check ."
+  }
+}
