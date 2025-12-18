@@ -12,13 +12,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
@@ -28,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useWebSocketContext } from '@/contexts/WebSocketContext';
 
-interface VADConfig {
+export interface VADConfig {
   energyThreshold: number;
   conversationBreakDuration: number;
   minSpeechDuration: number;
@@ -38,9 +31,14 @@ interface VADConfig {
 
 interface VoiceActivityDetectorProps {
   cameraStream?: MediaStream | null;
+  minimal?: boolean;
+  config?: VADConfig;
+  onConfigChange?: (config: VADConfig) => void;
 }
 
-// Enhanced Voice Blob Component with transmission feedback
+// ... existing code ...
+
+
 const VoiceBlob: React.FC<{
   energy: number;
   threshold: number;
@@ -147,7 +145,7 @@ const VoiceBlob: React.FC<{
   const colors = getGradientColors();
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-end gap-2">
       <div className="relative">
         <svg
           width={maxSize + 20}
@@ -207,42 +205,106 @@ const VoiceBlob: React.FC<{
         </svg>
       </div>
 
-      <div className="text-center">
-        <div
-          className={`font-mono text-2xl font-bold transition-colors duration-200 ${transmissionMode === 'audio+image'
-            ? 'text-purple-600'
-            : isAboveThreshold
-              ? 'text-green-600'
-              : 'text-blue-600'
-            }`}
-        >
-          {energy.toFixed(4)}
+      <div className="relative flex flex-col items-end gap-1 px-3 py-2 rounded border bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-xl border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+        {/* Animated scan line */}
+        <div className="absolute inset-0 overflow-hidden rounded pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent h-full animate-[scan_3s_ease-in-out_infinite]"
+            style={{
+              animation: 'scan 3s ease-in-out infinite',
+              backgroundSize: '100% 50%'
+            }} />
         </div>
-        <p className="text-muted-foreground text-sm">Energy Level</p>
-        <div className="mt-1 flex flex-col gap-1">
-          <Badge
-            variant={isAboveThreshold ? 'default' : 'secondary'}
-            className="text-xs"
-          >
-            {isAboveThreshold ? 'Above Threshold' : 'Below Threshold'}
-          </Badge>
-          <Badge
-            variant={transmissionMode === 'audio+image' ? 'default' : 'outline'}
-            className={`text-xs ${transmissionMode === 'audio+image'
-              ? 'bg-purple-500 hover:bg-purple-600'
-              : transmissionMode === 'audio'
-                ? 'bg-blue-500 hover:bg-blue-600'
-                : ''
-              }`}
-          >
-            {transmissionMode === 'audio+image'
-              ? '🎥 Audio + Image'
-              : transmissionMode === 'audio'
-                ? '🎤 Audio Only'
-                : '🔇 No Transmission'}
-          </Badge>
+
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 rounded pointer-events-none opacity-10"
+          style={{
+            backgroundImage: `
+                 linear-gradient(to right, rgba(6,182,212,0.3) 1px, transparent 1px),
+                 linear-gradient(to bottom, rgba(6,182,212,0.3) 1px, transparent 1px)
+               `,
+            backgroundSize: '8px 8px'
+          }} />
+
+        {/* Corner brackets - cyber style */}
+        <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-cyan-400/60 rounded-tl" />
+        <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-cyan-400/60 rounded-tr" />
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-cyan-400/60 rounded-bl" />
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-cyan-400/60 rounded-br" />
+
+        {/* Pulsing neon border */}
+        <div className={`absolute inset-0 rounded border transition-all duration-300 ${transmissionMode === 'audio+image'
+          ? 'border-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.4),inset_0_0_15px_rgba(168,85,247,0.1)] animate-pulse'
+          : isAboveThreshold
+            ? 'border-green-400/40 shadow-[0_0_15px_rgba(34,197,94,0.4),inset_0_0_15px_rgba(34,197,94,0.1)] animate-pulse'
+            : 'border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+          }`} />
+
+        {/* Energy value with glitch effect */}
+        <div className="relative flex items-baseline gap-1.5 z-10">
+          <div className="flex items-center gap-1">
+            <div className={`w-1.5 h-1.5 rounded-sm transition-all duration-200 ${isAboveThreshold
+              ? 'bg-green-400 shadow-[0_0_6px_rgba(34,197,94,1)] animate-pulse'
+              : 'bg-cyan-500/50'
+              }`} />
+            <div
+              className={`font-mono text-base font-bold tracking-[0.15em] transition-all duration-200 drop-shadow-[0_0_8px_currentColor] ${transmissionMode === 'audio+image'
+                ? 'text-purple-400'
+                : isAboveThreshold
+                  ? 'text-green-400'
+                  : 'text-cyan-400'
+                }`}
+            >
+              {energy.toFixed(4)}
+            </div>
+          </div>
+          <span className="text-[7px] font-mono text-cyan-500/60 uppercase tracking-[0.2em] self-end mb-0.5">dB</span>
         </div>
+
+        {/* Status bar with tech indicators */}
+        <div className="relative flex items-center gap-2 z-10">
+          {/* Animated status indicator */}
+          <div className="flex items-center gap-1">
+            <div className="flex flex-col gap-0.5">
+              <div className={`w-2 h-0.5 transition-all duration-200 ${isAboveThreshold ? 'bg-green-400 shadow-[0_0_4px_rgba(34,197,94,0.8)]' : 'bg-gray-700'
+                }`} />
+              <div className={`w-2 h-0.5 transition-all duration-200 delay-75 ${isAboveThreshold ? 'bg-green-400 shadow-[0_0_4px_rgba(34,197,94,0.8)]' : 'bg-gray-700'
+                }`} />
+              <div className={`w-2 h-0.5 transition-all duration-200 delay-150 ${isAboveThreshold ? 'bg-green-400 shadow-[0_0_4px_rgba(34,197,94,0.8)]' : 'bg-gray-700'
+                }`} />
+            </div>
+            <span className={`text-[7px] font-mono uppercase tracking-[0.25em] transition-colors duration-200 ${isAboveThreshold ? 'text-green-400' : 'text-gray-500'
+              }`}>
+              {isAboveThreshold ? 'ACTIVE' : 'STANDBY'}
+            </span>
+          </div>
+
+          {/* Transmission mode indicator */}
+          {transmissionMode !== 'none' && (
+            <>
+              <div className="w-px h-3 bg-gradient-to-b from-transparent via-cyan-500/40 to-transparent" />
+              <div className="flex items-center gap-1">
+                <span className="text-[9px]">
+                  {transmissionMode === 'audio+image' ? '🎥' : '🎤'}
+                </span>
+                <div className={`w-1 h-1 rounded-full animate-pulse ${transmissionMode === 'audio+image'
+                  ? 'bg-purple-400 shadow-[0_0_4px_rgba(168,85,247,0.8)]'
+                  : 'bg-blue-400 shadow-[0_0_4px_rgba(59,130,246,0.8)]'
+                  }`} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Bottom accent line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
       </div>
+
+      <style jsx>{`
+        @keyframes scan {
+          0%, 100% { transform: translateY(-100%); }
+          50% { transform: translateY(100%); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -287,7 +349,10 @@ const TransmissionHistory: React.FC<{
 };
 
 const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
-  cameraStream
+  cameraStream,
+  minimal,
+  config: externalConfig,
+  onConfigChange
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [currentEnergy, setCurrentEnergy] = useState(0);
@@ -305,13 +370,29 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
     }>
   >([]);
 
-  const [config, setConfig] = useState<VADConfig>({
+  const [internalConfig, setInternalConfig] = useState<VADConfig>({
     energyThreshold: 0.02,
     conversationBreakDuration: 2.5,
     minSpeechDuration: 0.8,
     maxSpeechDuration: 15,
     sampleRate: 16000
   });
+
+  const config = externalConfig || internalConfig;
+
+  const setConfig = (update: React.SetStateAction<VADConfig>) => {
+    let nextConfig;
+    if (typeof update === 'function') {
+      setInternalConfig(prev => {
+        nextConfig = update(prev);
+        return nextConfig;
+      });
+    } else {
+      nextConfig = update;
+      setInternalConfig(nextConfig);
+    }
+    if (onConfigChange && nextConfig) onConfigChange(nextConfig);
+  };
 
   // Audio processing refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -466,12 +547,12 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
       const audioContext = audioContextRef.current;
 
       const workletCode = `
-        class VoiceActivityProcessor extends AudioWorkletProcessor {
-          constructor() {
+          class VoiceActivityProcessor extends AudioWorkletProcessor {
+            constructor() {
             super();
-            this.bufferSize = 1024;
-            this.buffer = new Float32Array(this.bufferSize);
-            this.bufferIndex = 0;
+          this.bufferSize = 1024;
+          this.buffer = new Float32Array(this.bufferSize);
+          this.bufferIndex = 0;
           }
 
           process(inputs, outputs, parameters) {
@@ -479,35 +560,35 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
             
             if (input.length > 0) {
               const inputChannel = input[0];
-              
-              for (let i = 0; i < inputChannel.length; i++) {
-                this.buffer[this.bufferIndex] = inputChannel[i];
-                this.bufferIndex++;
+
+          for (let i = 0; i < inputChannel.length; i++) {
+            this.buffer[this.bufferIndex] = inputChannel[i];
+          this.bufferIndex++;
                 
                 if (this.bufferIndex >= this.bufferSize) {
-                  let sum = 0;
-                  for (let j = 0; j < this.bufferSize; j++) {
-                    sum += this.buffer[j] * this.buffer[j];
+            let sum = 0;
+          for (let j = 0; j < this.bufferSize; j++) {
+            sum += this.buffer[j] * this.buffer[j];
                   }
-                  const energy = Math.sqrt(sum / this.bufferSize);
-                  
-                  this.port.postMessage({
-                    type: 'audioData',
-                    energy: energy,
-                    audioData: new Float32Array(this.buffer)
+          const energy = Math.sqrt(sum / this.bufferSize);
+
+          this.port.postMessage({
+            type: 'audioData',
+          energy: energy,
+          audioData: new Float32Array(this.buffer)
                   });
-                  
-                  this.bufferIndex = 0;
+
+          this.bufferIndex = 0;
                 }
               }
             }
-            
-            return true;
+
+          return true;
           }
         }
 
-        registerProcessor('voice-activity-processor', VoiceActivityProcessor);
-      `;
+          registerProcessor('voice-activity-processor', VoiceActivityProcessor);
+          `;
 
       const blob = new Blob([workletCode], { type: 'application/javascript' });
       const workletUrl = URL.createObjectURL(blob);
@@ -683,166 +764,83 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
     };
   }, [stopListening]);
 
-  return (
-    <Card className="mx-auto w-full max-w-4xl">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Voice Control</CardTitle>
-        <CardDescription>
-          Speak naturally - pauses trigger responses
-        </CardDescription>
-      </CardHeader>
+  if (minimal) {
+    return (
+      <div className="relative inline-flex items-center justify-center">
+        {/* Voice Activity Blob - Floating above */}
+        <div className={`absolute bottom-full left-0 mb-4 pointer-events-none transition-opacity duration-300 ${isListening ? 'opacity-100' : 'opacity-0 z-50'}`}>
+          <div className="w-[120px] h-[100px] flex items-end justify-center">
+            <VoiceBlob
+              energy={currentEnergy}
+              threshold={config.energyThreshold}
+              transmissionMode={transmissionMode}
+            />
+          </div>
+        </div>
 
-      <CardContent className="space-y-6">
-        {/* Main Controls */}
-        <div className="flex items-center justify-center space-x-4">
+        {/* Minimal Mic Button */}
+        <div className="relative">
+          {isSpeechActive && isListening && (
+            <div className="absolute inset-0 rounded-xl bg-rose-400 animate-ping opacity-20" />
+          )}
           <Button
             onClick={toggleListening}
-            size="lg"
-            variant={isListening ? 'destructive' : 'default'}
-            disabled={!isConnected}
+            size="icon"
+            className={`
+                        h-8 w-8 rounded-xl bg-gradient-to-r p-0 shadow-md transition-all duration-300 hover:scale-105 active:scale-95
+                        ${isListening
+                ? 'from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white'
+                : 'from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white'
+              }
+                    `}
           >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-            <span className="ml-2">
-              {!isConnected
-                ? 'Connecting...'
-                : isListening
-                  ? 'Stop Voice Control'
-                  : 'Start Voice Control'}
-            </span>
+            {isListening ? <MicOff size={14} /> : <Mic size={14} />}
           </Button>
         </div>
+      </div>
+    );
+  }
 
-        {/* Enhanced Status Indicators */}
-        <div className="flex justify-center space-x-8">
-          <div className="text-center">
-            <div
-              className={`inline-block h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-            />
-            <p className="text-muted-foreground mt-1 text-sm">Server</p>
-          </div>
-          <div className="text-center">
-            <div
-              className={`inline-block h-3 w-3 rounded-full ${isListening ? 'bg-blue-500' : 'bg-gray-300'
-                }`}
-            />
-            <p className="text-muted-foreground mt-1 text-sm">Microphone</p>
-          </div>
-          <div className="text-center">
-            <div
-              className={`inline-block h-3 w-3 rounded-full ${isSpeechActive ? 'bg-orange-500' : 'bg-gray-300'
-                }`}
-            />
-            <p className="text-muted-foreground mt-1 text-sm">Speech Active</p>
-          </div>
-          <div className="text-center">
-            <div
-              className={`inline-block h-3 w-3 rounded-full ${cameraStream ? 'bg-purple-500' : 'bg-gray-300'
-                }`}
-            />
-            <p className="text-muted-foreground mt-1 text-sm">Camera</p>
-          </div>
-        </div>
+  return (
+    <div className="flex flex-col items-center justify-end w-full pb-1">
+      {/* Voice Activity Blob - Integrated look */}
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isListening ? 'h-[80px] opacity-100 mb-2' : 'h-0 opacity-0 mb-0'}`}>
+        <VoiceBlob
+          energy={currentEnergy}
+          threshold={config.energyThreshold}
+          transmissionMode={transmissionMode}
+        />
+      </div>
 
-        {/* Enhanced Voice Activity Blob */}
-        <div className="flex justify-center">
-          <VoiceBlob
-            energy={currentEnergy}
-            threshold={config.energyThreshold}
-            transmissionMode={transmissionMode}
-          />
-        </div>
+      {/* Main Controls - Minimal Mic Button */}
+      <div className="relative">
+        {/* Pulse effect ring (optional, minimal) */}
+        {isSpeechActive && isListening && (
+          <div className="absolute inset-0 rounded-full bg-rose-400 animate-ping opacity-20" />
+        )}
 
-        {/* Transmission History */}
-        <TransmissionHistory transmissions={transmissionHistory} />
+        <Button
+          onClick={toggleListening}
+          className={`
+                  h-12 w-12 rounded-full p-0 shadow-md transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center
+                  ${isListening
+              ? 'bg-rose-500 hover:bg-rose-600 text-white'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }
+              `}
+        >
+          {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+        </Button>
+      </div>
 
-        {/* Settings */}
-        <Collapsible open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="w-full">
-              <Settings className="mr-2 h-4 w-4" />
-              Detection Settings
-              {isSettingsOpen ? (
-                <ChevronUp className="ml-2 h-4 w-4" />
-              ) : (
-                <ChevronDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="threshold">Energy Threshold</Label>
-                <Input
-                  id="threshold"
-                  type="number"
-                  step="0.001"
-                  value={config.energyThreshold}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      energyThreshold: parseFloat(e.target.value)
-                    }))
-                  }
-                  disabled={isListening}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="break">Pause Duration (s)</Label>
-                <Input
-                  id="break"
-                  type="number"
-                  step="0.1"
-                  value={config.conversationBreakDuration}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      conversationBreakDuration: parseFloat(e.target.value)
-                    }))
-                  }
-                  disabled={isListening}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="minSpeech">Min Speech (s)</Label>
-                <Input
-                  id="minSpeech"
-                  type="number"
-                  step="0.1"
-                  value={config.minSpeechDuration}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      minSpeechDuration: parseFloat(e.target.value)
-                    }))
-                  }
-                  disabled={isListening}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maxSpeech">Max Speech (s)</Label>
-                <Input
-                  id="maxSpeech"
-                  type="number"
-                  step="1"
-                  value={config.maxSpeechDuration}
-                  onChange={(e) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      maxSpeechDuration: parseFloat(e.target.value)
-                    }))
-                  }
-                  disabled={isListening}
-                />
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
-    </Card>
+      <span className="mt-2 text-[10px] font-medium text-slate-400">
+        {!isConnected
+          ? 'Connecting...'
+          : isListening
+            ? isSpeechActive ? 'Listening...' : 'Listening...'
+            : 'Tap to speak'}
+      </span>
+    </div>
   );
 };
 

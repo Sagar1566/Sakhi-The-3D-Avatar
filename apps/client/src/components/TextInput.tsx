@@ -1,20 +1,24 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Send, Camera, Sparkles } from 'lucide-react';
+import { Send, Camera, Sparkles, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useWebSocketContext } from '@/contexts/WebSocketContext';
+import VoiceActivityDetector, { VADConfig } from '@/components/VoiceActivityDetector';
 
 interface TextInputProps {
     cameraStream?: MediaStream | null;
+    voiceConfig?: VADConfig;
+    onVoiceConfigChange?: (config: VADConfig) => void;
+    isSpeaking?: boolean;
 }
 
-const TextInput: React.FC<TextInputProps> = ({ cameraStream }) => {
+const TextInput: React.FC<TextInputProps> = ({ cameraStream, voiceConfig, onVoiceConfigChange, isSpeaking }) => {
     const [text, setText] = useState('');
     const [includeImage, setIncludeImage] = useState(false);
-    const { isConnected, sendText } = useWebSocketContext();
+    const { isConnected, sendText, stopAudio } = useWebSocketContext();
 
     // Capture image from camera stream
     const captureImageFromStream = useCallback((): string | null => {
@@ -82,78 +86,58 @@ const TextInput: React.FC<TextInputProps> = ({ cameraStream }) => {
     );
 
     return (
-        <div className="p-6">
-            {/* Header */}
-            <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 p-2">
-                        <Sparkles className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-lg font-bold text-transparent">
-                        Text Message
-                    </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                    {cameraStream && (
-                        <Button
-                            variant={includeImage ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setIncludeImage(!includeImage)}
-                            className={`h-8 transition-all duration-300 ${includeImage
-                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600'
-                                : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
-                                }`}
-                        >
-                            <Camera size={14} className="mr-1" />
-                            {includeImage ? 'Image On' : 'Image Off'}
-                        </Button>
-                    )}
-                    <Badge
-                        variant={isConnected ? 'default' : 'secondary'}
-                        className={`text-xs ${isConnected
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                            : 'bg-gray-300'
-                            }`}
-                    >
-                        {isConnected ? '● Connected' : '○ Disconnected'}
-                    </Badge>
-                </div>
-            </div>
-
-            {/* Input Area */}
+        <div className="p-0">
             <div className="relative">
+                <div className="absolute bottom-1.5 left-1.5 z-10">
+                    <VoiceActivityDetector cameraStream={cameraStream} minimal config={voiceConfig} onConfigChange={onVoiceConfigChange} />
+                </div>
+
                 <Textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    placeholder="Type your message here... ✨"
-                    className="min-h-[100px] resize-none rounded-2xl border-2 border-purple-100 bg-white/50 pr-14 text-gray-700 placeholder:text-gray-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                    placeholder="Type a message..."
+                    className="min-h-[50px] text-sm resize-none rounded-2xl border-2 border-white/20 bg-black/40 backdrop-blur-md py-3 pl-12 pr-32 text-white placeholder:text-white/70 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30 scrollbar-hide shadow-lg"
                     disabled={!isConnected}
                 />
-                <Button
-                    onClick={handleSend}
-                    disabled={!text.trim() || !isConnected}
-                    size="sm"
-                    className="absolute bottom-3 right-3 h-10 w-10 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 p-0 shadow-lg transition-all duration-300 hover:from-indigo-600 hover:to-purple-700 hover:shadow-xl disabled:from-gray-300 disabled:to-gray-400"
-                >
-                    <Send size={18} />
-                </Button>
-            </div>
 
-            {/* Image Indicator */}
-            {includeImage && cameraStream && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 text-sm">
-                    <Camera size={16} className="text-purple-600" />
-                    <span className="font-medium text-purple-700">
-                        Image will be included with this message
-                    </span>
+                <div className="absolute bottom-1.5 right-1.5 flex gap-1 items-center">
+                    {cameraStream && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIncludeImage(!includeImage)}
+                            className={`h-8 w-8 rounded-xl transition-all duration-300 ${includeImage
+                                ? 'bg-purple-500/50 text-white'
+                                : 'text-white/70 hover:bg-white/20'
+                                }`}
+                            title={includeImage ? "Disable Image" : "Enable Image"}
+                        >
+                            <Camera size={16} />
+                        </Button>
+                    )}
+
+                    {isSpeaking && (
+                        <Button
+                            onClick={stopAudio}
+                            size="icon"
+                            variant="destructive"
+                            className="h-8 w-8 rounded-xl bg-red-500/80 hover:bg-red-600 p-0 shadow-md transition-all duration-300 backdrop-blur-sm animate-in fade-in zoom-in"
+                            title="Pause Speaking"
+                        >
+                            <Pause size={14} fill="currentColor" />
+                        </Button>
+                    )}
+
+                    <Button
+                        onClick={handleSend}
+                        disabled={!text.trim() || !isConnected}
+                        size="icon"
+                        className="h-8 w-8 rounded-xl bg-purple-600/80 hover:bg-purple-600 p-0 shadow-md transition-all duration-300 backdrop-blur-sm disabled:bg-gray-500/50"
+                    >
+                        <Send size={14} className="text-white" />
+                    </Button>
                 </div>
-            )}
-
-            {/* Help Text */}
-            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                <span>Press Enter to send • Shift+Enter for new line</span>
-                <span className="font-medium">{text.length} characters</span>
             </div>
         </div>
     );
