@@ -5,15 +5,25 @@ import { Button } from '@/components/ui/button';
 import { X, Loader2, Camera, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import Script from 'next/script';
 import { useWebSocketContext } from '@/contexts/WebSocketContext';
+import TextInput from '@/components/TextInput';
+import { VADConfig } from '@/components/VoiceActivityDetector';
 
 interface ARViewerProps {
     onClose: () => void;
     avatarUrl?: string;
+    cameraStream?: MediaStream | null;
+    voiceConfig?: VADConfig;
+    onVoiceConfigChange?: (config: VADConfig) => void;
+    isSpeaking?: boolean;
 }
 
 const ARViewer: React.FC<ARViewerProps> = ({
     onClose,
-    avatarUrl = 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png'
+    avatarUrl = 'https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png',
+    cameraStream,
+    voiceConfig,
+    onVoiceConfigChange,
+    isSpeaking
 }) => {
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +88,7 @@ const ARViewer: React.FC<ARViewerProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-900 via-black to-pink-900">
+        <div className={`fixed inset-0 z-50 ${cameraStream ? 'bg-black/20' : 'bg-gradient-to-br from-purple-900 via-black to-pink-900'}`}>
             <Script
                 src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
                 type="module"
@@ -229,6 +239,18 @@ const ARViewer: React.FC<ARViewerProps> = ({
                     </p>
                 </div>
             )}
+
+            {/* Voice and Text Input Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-[70]">
+                <div className="w-full md:max-w-2xl mx-auto">
+                    <TextInput
+                        cameraStream={cameraStream}
+                        voiceConfig={voiceConfig}
+                        onVoiceConfigChange={onVoiceConfigChange}
+                        isSpeaking={isSpeaking}
+                    />
+                </div>
+            </div>
         </div>
     );
 };

@@ -275,6 +275,7 @@ const CameraStream: React.FC<CameraStreamProps> = ({
       <div className="relative h-full bg-black">
         <video
           ref={videoRef}
+          id="camera-video-stream"
           className="h-full w-full object-cover"
           playsInline
           muted

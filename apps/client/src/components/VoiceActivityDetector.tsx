@@ -439,9 +439,7 @@ const VoiceActivityDetector: React.FC<VoiceActivityDetectorProps> = ({
 
     try {
       // Try to find existing video element in CameraStream component
-      const existingVideo = document.querySelector(
-        'video[autoplay]'
-      ) as HTMLVideoElement;
+      const existingVideo = document.getElementById('camera-video-stream') as HTMLVideoElement;
 
       if (
         existingVideo &&

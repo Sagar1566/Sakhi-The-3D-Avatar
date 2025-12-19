@@ -20,14 +20,19 @@ const TextInput: React.FC<TextInputProps> = ({ cameraStream, voiceConfig, onVoic
     const [includeImage, setIncludeImage] = useState(false);
     const { isConnected, sendText, stopAudio } = useWebSocketContext();
 
+    // Auto-enable image when camera is active
+    React.useEffect(() => {
+        if (cameraStream) {
+            setIncludeImage(true);
+        }
+    }, [cameraStream]);
+
     // Capture image from camera stream
     const captureImageFromStream = useCallback((): string | null => {
         if (!cameraStream) return null;
 
         try {
-            const existingVideo = document.querySelector(
-                'video[autoplay]'
-            ) as HTMLVideoElement;
+            const existingVideo = document.getElementById('camera-video-stream') as HTMLVideoElement;
 
             if (
                 existingVideo &&

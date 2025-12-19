@@ -267,7 +267,13 @@ export default function Home() {
 
         {/* AR View Overlay */}
         {showAR && (
-          <ARViewer onClose={() => setShowAR(false)} />
+          <ARViewer
+            onClose={() => setShowAR(false)}
+            cameraStream={cameraStream}
+            voiceConfig={voiceConfig}
+            onVoiceConfigChange={setVoiceConfig}
+            isSpeaking={isAvatarSpeaking}
+          />
         )}
 
         {/* Reminder Notification Popup */}

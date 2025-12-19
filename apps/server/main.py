@@ -29,6 +29,11 @@ from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 
 # Import Kokoro TTS library
+import spacy.cli
+def mock_download(name, *args, **kwargs):
+    print(f"Skipping spacy download for {name} to prevent process exit.")
+spacy.cli.download = mock_download
+
 from kokoro import KPipeline
 
 # Configure logging
@@ -245,8 +250,6 @@ class SmolVLMProcessor:
                 new_size = (int(image.size[0] * 0.75), int(image.size[1] * 0.75))
                 image = image.resize(new_size, Image.Resampling.LANCZOS)
 
-                # Clear message history when new image is set
-                self.message_history = []
                 self.last_image = image
                 self.last_image_timestamp = time.time()
                 logger.info("Image cached successfully")
@@ -259,34 +262,74 @@ class SmolVLMProcessor:
         """Process text with image context using SmolVLM2"""
         async with self.lock:
             try:
+                # Construct messages with history
+                messages = []
+                
+                # Add history
+                for msg in self.message_history:
+                    messages.append({
+                        "role": msg["role"],
+                        "content": [
+                            {"type": "text", "text": msg["text"]}
+                        ]
+                    })
+
+                # Add current message
                 if not self.last_image:
-                    messages = [
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": text},
-                            ],
-                        },
-                    ]
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": text},
+                        ],
+                    })
                 else:
-                    messages = [
-                        {
+                    # For multimodal, we only include the image in the current turn if it's new/relevant
+                    # But since we are stateless per request, we attach the current cached image to the current request
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "image", "url": self.last_image},
+                            {"type": "text", "text": text},
+                        ],
+                    })
+
+                # Apply chat template
+                inputs = None
+                try:
+                    inputs = self.processor.apply_chat_template(
+                        messages,
+                        add_generation_prompt=True,
+                        tokenize=True,
+                        return_dict=True,
+                        return_tensors="pt",
+                    ).to(self.device, dtype=torch.bfloat16)
+                except Exception as hist_error:
+                    logger.error(f"⚠️ Error applying chat template with history: {hist_error}")
+                    logger.info("♻️ Retrying without history...")
+                    
+                    # Fallback: Create simple message with just current input
+                    fallback_messages = []
+                    if not self.last_image:
+                        fallback_messages = [{
+                            "role": "user", 
+                            "content": [{"type": "text", "text": text}]
+                        }]
+                    else:
+                        fallback_messages = [{
                             "role": "user",
                             "content": [
                                 {"type": "image", "url": self.last_image},
-                                {"type": "text", "text": text},
-                            ],
-                        },
-                    ]
-
-                # Apply chat template
-                inputs = self.processor.apply_chat_template(
-                    messages,
-                    add_generation_prompt=True,
-                    tokenize=True,
-                    return_dict=True,
-                    return_tensors="pt",
-                ).to(self.device, dtype=torch.bfloat16)
+                                {"type": "text", "text": text}
+                            ]
+                        }]
+                    
+                    inputs = self.processor.apply_chat_template(
+                        fallback_messages,
+                        add_generation_prompt=True,
+                        tokenize=True,
+                        return_dict=True,
+                        return_tensors="pt",
+                    ).to(self.device, dtype=torch.bfloat16)
 
                 # Create a streamer for token-by-token generation
                 streamer = TextIteratorStreamer(
