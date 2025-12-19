@@ -36,7 +36,7 @@ interface WebSocketContextType {
   sendAudioSegment: (audioData: ArrayBuffer) => void;
   sendImage: (imageData: string) => void;
   sendAudioWithImage: (audioData: ArrayBuffer, imageData: string) => void;
-  sendText: (text: string, imageData?: string) => void;
+  sendText: (text: string, imageData?: string, personality?: string) => void;
   stopAudio: () => void;
   onAudioReceived: (
     callback: (
@@ -395,13 +395,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   );
 
   const sendText = useCallback(
-    (text: string, imageData?: string) => {
+    (text: string, imageData?: string, personality: string = 'friend') => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const message: {
           text_message: string;
           image?: string;
+          personality?: string;
         } = {
-          text_message: text
+          text_message: text,
+          personality: personality
         };
 
         if (imageData) {
@@ -409,7 +411,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         }
 
         wsRef.current.send(JSON.stringify(message));
-        console.log(`Sent text message: "${text}"${imageData ? ' with image' : ''}`);
+        console.log(`Sent text message: "${text}"${imageData ? ' with image' : ''} (personality: ${personality})`);
       }
     },
     []

@@ -51,6 +51,16 @@ export default function Home() {
   });
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
 
+  // Personality options
+  const personalities = [
+    { value: 'friend', label: 'Friend', icon: '👋', description: 'Casual and friendly companion' },
+    { value: 'doctor', label: 'Dr. Sakhi', icon: '🩺', description: 'Emotional support & wellness coach' },
+    { value: 'student', label: 'Study Buddy', icon: '📚', description: 'Learning assistant' },
+    { value: 'girlfriend', label: 'Companion', icon: '💕', description: 'Caring and affectionate' },
+    { value: 'teacher', label: 'Teacher', icon: '👨‍🏫', description: 'Patient educator' },
+  ];
+  const [selectedPersonality, setSelectedPersonality] = useState('friend');
+
   // Background themes with actual color values
   const backgroundThemes = [
     { id: 'purple-pink', name: 'Purple Dream', colors: { from: '#581c87', via: '#000000', to: '#831843' } },
@@ -232,6 +242,7 @@ export default function Home() {
                           voiceConfig={voiceConfig}
                           onVoiceConfigChange={setVoiceConfig}
                           isSpeaking={isAvatarSpeaking}
+                          personality={selectedPersonality}
                         />
                       </div>
                     </div>
@@ -254,6 +265,66 @@ export default function Home() {
             onStreamChange={setCameraStream}
             className="w-11 h-11 p-3"
           />
+
+
+          {/* Professional Personality Switcher */}
+          <div className="relative group">
+            <button
+              onClick={() => {
+                const currentIndex = personalities.findIndex(p => p.value === selectedPersonality);
+                const nextIndex = (currentIndex + 1) % personalities.length;
+                setSelectedPersonality(personalities[nextIndex].value);
+              }}
+              className={`w-12 h-12 rounded-xl text-white shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center border border-white/30 backdrop-blur-sm relative overflow-hidden ${selectedPersonality === 'doctor'
+                  ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500'
+                  : selectedPersonality === 'teacher'
+                    ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500'
+                    : selectedPersonality === 'student'
+                      ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500'
+                      : selectedPersonality === 'girlfriend'
+                        ? 'bg-gradient-to-br from-pink-500 via-rose-500 to-red-500'
+                        : 'bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500'
+                }`}
+              aria-label="Switch Personality"
+            >
+              {/* Animated background effect */}
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Icon */}
+              <span className="text-2xl relative z-10 drop-shadow-lg">
+                {personalities.find(p => p.value === selectedPersonality)?.icon}
+              </span>
+            </button>
+
+            {/* Professional Tooltip */}
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none">
+              <div className="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10 min-w-[200px]">
+                {/* Arrow */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
+                  <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[6px] border-l-gray-900/95" />
+                </div>
+
+                {/* Content */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{personalities.find(p => p.value === selectedPersonality)?.icon}</span>
+                    <span className="font-semibold text-sm">{personalities.find(p => p.value === selectedPersonality)?.label}</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    {personalities.find(p => p.value === selectedPersonality)?.description}
+                  </p>
+                  <div className="pt-1.5 border-t border-white/10">
+                    <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                      </svg>
+                      Click to switch
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* AR Button */}
           <button

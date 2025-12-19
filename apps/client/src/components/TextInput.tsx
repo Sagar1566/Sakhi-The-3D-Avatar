@@ -13,9 +13,10 @@ interface TextInputProps {
     voiceConfig?: VADConfig;
     onVoiceConfigChange?: (config: VADConfig) => void;
     isSpeaking?: boolean;
+    personality?: string;
 }
 
-const TextInput: React.FC<TextInputProps> = ({ cameraStream, voiceConfig, onVoiceConfigChange, isSpeaking }) => {
+const TextInput: React.FC<TextInputProps> = ({ cameraStream, voiceConfig, onVoiceConfigChange, isSpeaking, personality = 'friend' }) => {
     const [text, setText] = useState('');
     const [includeImage, setIncludeImage] = useState(false);
     const { isConnected, sendText, stopAudio } = useWebSocketContext();
@@ -76,9 +77,9 @@ const TextInput: React.FC<TextInputProps> = ({ cameraStream, voiceConfig, onVoic
             }
         }
 
-        sendText(text.trim(), imageData);
+        sendText(text.trim(), imageData, personality);
         setText('');
-    }, [text, isConnected, includeImage, cameraStream, sendText, captureImageFromStream]);
+    }, [text, isConnected, includeImage, cameraStream, sendText, captureImageFromStream, personality]);
 
     const handleKeyPress = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

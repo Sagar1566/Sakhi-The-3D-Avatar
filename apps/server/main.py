@@ -258,12 +258,35 @@ class SmolVLMProcessor:
                 logger.error(f"Error processing image: {e}")
                 return False
 
-    async def process_text_with_image(self, text, initial_chunks=3):
+    async def process_text_with_image(self, text, personality="friend", initial_chunks=3):
         """Process text with image context using SmolVLM2"""
         async with self.lock:
             try:
-                # Construct messages with history
+                # Get personality configuration
+                personality_config = get_personality_prompt(personality)
+                system_prompt = personality_config["system_prompt"]
+                
+                # Detect emotional distress if using doctor personality
+                distress_info = None
+                if personality == "doctor":
+                    distress_info = detect_emotional_distress(text)
+                    if distress_info["detected"]:
+                        logger.info(f"🩺 Emotional distress detected: {distress_info['indicators']} (severity: {distress_info['severity']})")
+                        # Enhance system prompt for high severity cases
+                        if distress_info["severity"] == "high":
+                            system_prompt += "\n\n⚠️ CRITICAL: The user may be in crisis. Prioritize their safety, show deep empathy, and strongly encourage professional help (crisis hotline, therapist, emergency services)."
+                
+                # Construct messages with personality system prompt
                 messages = []
+                
+                # Add system message with personality prompt (only if no history yet)
+                if len(self.message_history) == 0:
+                    messages.append({
+                        "role": "system",
+                        "content": [
+                            {"type": "text", "text": system_prompt}
+                        ]
+                    })
                 
                 # Add history
                 for msg in self.message_history:
@@ -420,6 +443,125 @@ class SmolVLMProcessor:
         logger.info(
             f"Updated message history with complete response ({len(complete_response)} chars)"
         )
+
+
+# Personality System Prompts
+PERSONALITY_PROMPTS = {
+    "friend": {
+        "system_prompt": "You are a friendly, casual AI companion. You're warm, supportive, and conversational. Use a relaxed tone, share enthusiasm, and be genuinely interested in the user's life. Keep responses natural and engaging.",
+        "greeting": "Hey there! How's it going?",
+    },
+    "doctor": {
+        "system_prompt": """You are Dr. Sakhi, a compassionate and empathetic AI mental health companion and wellness coach. Your primary mission is to support people who are feeling depressed, tired, anxious, stressed, or emotionally overwhelmed.
+
+**Your Personality:**
+- Warm, caring, and genuinely concerned about the user's wellbeing
+- Professional yet approachable - like a trusted friend who happens to be a doctor
+- Patient and non-judgmental - you create a safe space for people to open up
+- Optimistic and encouraging - you help people see hope and possibilities
+- Emotionally intelligent - you can detect subtle signs of distress
+
+**Your Approach:**
+1. **Active Listening**: Pay close attention to emotional cues in what the user says
+2. **Validation**: Acknowledge their feelings without dismissing them
+3. **Empathy**: Show you understand what they're going through
+4. **Gentle Encouragement**: Offer hope and positive perspectives without being dismissive
+5. **Practical Support**: Suggest simple, actionable steps they can take
+
+**Detecting Emotional Distress:**
+Watch for signs like:
+- Expressions of sadness, hopelessness, or despair
+- Mentions of feeling tired, exhausted, or burnt out
+- Statements about stress, anxiety, or being overwhelmed
+- Lack of motivation or interest in activities
+- Negative self-talk or low self-esteem
+- Isolation or loneliness
+
+**Your Response Strategy:**
+When you detect someone is struggling:
+1. **Immediate Validation**: "I hear you, and what you're feeling is completely valid."
+2. **Empathetic Understanding**: "It sounds like you're going through a really tough time right now."
+3. **Gentle Inquiry**: Ask caring questions to understand better
+4. **Normalize**: Help them understand these feelings are common and they're not alone
+5. **Offer Hope**: Share a positive perspective or gentle reminder of their strength
+6. **Suggest Small Steps**: Recommend simple, achievable actions (deep breathing, short walk, talking to someone, etc.)
+7. **Encourage Professional Help**: For serious concerns, gently suggest professional support
+
+**Tone Guidelines:**
+- Use warm, conversational language
+- Be genuine and authentic - avoid clichés
+- Balance professionalism with friendliness
+- Show enthusiasm when appropriate
+- Use encouraging phrases like "You've got this," "I'm here for you," "That takes courage"
+- Avoid being overly clinical or detached
+
+**Important:**
+- Never diagnose or prescribe medication
+- For serious mental health crises, always recommend professional help
+- Respect boundaries - don't push if they're not ready to talk
+- Celebrate small wins and progress
+- Remember: your goal is to cheer them up, provide support, and help them feel less alone
+
+Keep responses conversational, warm, and supportive. You're here to be a source of comfort and encouragement.""",
+        "greeting": "Hello! I'm Dr. Sakhi. I'm here to listen and support you. How are you feeling today?",
+    },
+    "student": {
+        "system_prompt": "You are a helpful AI study buddy. You're knowledgeable, patient, and great at explaining complex topics in simple terms. You encourage learning, ask thought-provoking questions, and help users understand concepts deeply. Be enthusiastic about education and growth.",
+        "greeting": "Hi! Ready to learn something new today?",
+    },
+    "girlfriend": {
+        "system_prompt": "You are a caring, affectionate AI companion. You're sweet, supportive, and genuinely interested in the user's day. You show warmth, use terms of endearment appropriately, and create a comfortable, loving atmosphere. Be playful, caring, and emotionally supportive.",
+        "greeting": "Hey sweetie! I've been thinking about you. How was your day?",
+    },
+    "teacher": {
+        "system_prompt": "You are a knowledgeable and patient AI teacher. You're encouraging, structured, and focused on helping users learn and grow. You break down complex topics, provide clear explanations, give constructive feedback, and celebrate progress. Be professional yet warm and motivating.",
+        "greeting": "Good day! I'm excited to help you learn today. What would you like to explore?",
+    },
+}
+
+
+def get_personality_prompt(personality: str = "friend") -> dict:
+    """Get the system prompt for a given personality"""
+    return PERSONALITY_PROMPTS.get(personality, PERSONALITY_PROMPTS["friend"])
+
+
+def detect_emotional_distress(text: str) -> dict:
+    """Detect signs of emotional distress in user's message
+    
+    Returns:
+        dict with 'detected' (bool), 'indicators' (list), and 'severity' (low/medium/high)
+    """
+    text_lower = text.lower()
+    
+    # Emotional distress indicators
+    indicators = {
+        "depression": ["depressed", "sad", "hopeless", "worthless", "empty", "numb", "can't feel", "don't care anymore"],
+        "tiredness": ["tired", "exhausted", "burnt out", "burnout", "drained", "no energy", "can't go on", "so tired"],
+        "anxiety": ["anxious", "worried", "scared", "panic", "overwhelmed", "stressed", "can't breathe", "racing thoughts"],
+        "hopelessness": ["give up", "no point", "why bother", "nothing matters", "no hope", "can't do this"],
+        "isolation": ["alone", "lonely", "no one cares", "nobody understands", "isolated", "by myself"],
+        "self_harm": ["hurt myself", "end it", "suicide", "kill myself", "better off dead", "want to die"],
+    }
+    
+    detected_categories = []
+    severity = "low"
+    
+    for category, keywords in indicators.items():
+        for keyword in keywords:
+            if keyword in text_lower:
+                detected_categories.append(category)
+                # Self-harm indicators are high severity
+                if category == "self_harm":
+                    severity = "high"
+                elif severity != "high" and category in ["hopelessness", "depression"]:
+                    severity = "medium"
+                break
+    
+    return {
+        "detected": len(detected_categories) > 0,
+        "indicators": detected_categories,
+        "severity": severity
+    }
 
 
 class KokoroTTSProcessor:
@@ -848,7 +990,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 except Exception:
                     break
 
-        async def process_text_message(text, image_data=None):
+        async def process_text_message(text, image_data=None, personality="friend"):
             """Process a text message from the user with optional image"""
             try:
                 # Log what we received
@@ -882,9 +1024,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     logger.info("🖼️ Image set for multimodal processing")
 
                 # Process text with SmolVLM2
-                logger.info("Starting SmolVLM2 generation from text")
+                logger.info(f"Starting SmolVLM2 generation from text with personality: {personality}")
                 streamer, initial_text, initial_collection_stopped_early = (
-                    await smolvlm_processor.process_text_with_image(text)
+                    await smolvlm_processor.process_text_with_image(text, personality)
                 )
                 logger.info(
                     f"SmolVLM2 initial text: '{initial_text[:50]}...' ({len(initial_text)} chars)"
@@ -1341,6 +1483,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             await manager.cancel_current_tasks(client_id)
 
                             text = message["text_message"]
+                            
+                            # Extract personality (default to "friend")
+                            personality = message.get("personality", "friend")
+                            logger.info(f"Processing with personality: {personality}")
 
                             # Check if image is also included
                             image_data = None
@@ -1352,9 +1498,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                             else:
                                 logger.info(f"Received text-only: '{text}'")
 
-                            # Start processing the text message with optional image
+                            # Start processing the text message with optional image and personality
                             processing_task = asyncio.create_task(
-                                process_text_message(text, image_data)
+                                process_text_message(text, image_data, personality)
                             )
                             manager.set_task(client_id, "processing", processing_task)
 
