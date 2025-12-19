@@ -16,13 +16,12 @@ build/
 *.db
 *.sqlite3
 
-# Logs
-*.log
+# Folders
+received_images/
+.venv/
+__pycache__/
 
 # Environment
 .env
 .env.*
 !.env.example
-
-# Folders
-received_images/
