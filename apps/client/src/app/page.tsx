@@ -11,7 +11,7 @@ import ReminderNotification from '@/components/ReminderNotification';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageSquare, Mic, Box, LogOut, User, Settings, Palette, ChevronRight, Edit, Monitor, Mail } from 'lucide-react';
+import { Sparkles, MessageSquare, Mic, Box, LogOut, User, Settings, Palette, ChevronRight, Edit, Monitor, Mail, Wrench, Bell, StickyNote, Calendar, Send, Clock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -50,6 +50,7 @@ export default function Home() {
     sampleRate: 16000
   });
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
 
   // Personality options
   const personalities = [
@@ -86,131 +87,142 @@ export default function Home() {
         }}
       >
 
-        {/* Top Navigation Bar */}
-        <div className="fixed top-0 left-0 right-0 z-50 p-6 flex justify-between items-center pointer-events-none">
-          {/* Brand Logo */}
-          <div className="pointer-events-auto">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">Sakhi</span>
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent ml-2">AI</span>
-            </h1>
-          </div>
+        {/* Professional Glassmorphism Top Navigation Bar - Full Width */}
+        <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+          {/* Glassy navbar container - Full width with bottom rounded corners */}
+          <div className="rounded-b-3xl bg-white/5 backdrop-blur-2xl border-b border-x border-white/10 shadow-2xl shadow-black/20 pointer-events-auto">
+            <div className="px-4 py-3 md:px-8 md:py-4 flex justify-between items-center max-w-screen-2xl mx-auto">
+              {/* Brand Logo */}
+              <div className="flex items-center gap-3">
+                {/* Logo Icon */}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
 
-          <div className="pointer-events-auto relative">
-            {/* Profile Button */}
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowProfileMenu(!showProfileMenu);
-                setShowThemeSelector(false);
-              }}
-              className="h-12 w-12 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all shadow-lg p-0"
-              title="Profile & Settings"
-            >
-              <div className="h-full w-full rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500">
-                <span className="text-lg font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || <User className="h-6 w-6" />}
-                </span>
+                {/* Brand Text */}
+                <h1 className="text-xl md:text-2xl font-black tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                  <span className="bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent drop-shadow-lg">Sakhi</span>
+                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-fuchsia-400 bg-clip-text text-transparent ml-1.5 drop-shadow-lg">AI</span>
+                </h1>
               </div>
-            </Button>
 
-            {/* Profile Menu */}
-            {showProfileMenu && (
-              <div
-                className="absolute top-14 right-0 w-72 bg-black/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* User Info Header */}
-                <div className="p-4 border-b border-white/10 bg-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                      {user?.name?.charAt(0).toUpperCase()}
+              <div className="relative">
+                {/* Professional Profile Button */}
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowProfileMenu(!showProfileMenu);
+                    setShowThemeSelector(false);
+                  }}
+                  className="h-11 w-11 rounded-xl bg-white/10 backdrop-blur-md text-white hover:bg-white/15 border border-white/20 transition-all duration-300 shadow-lg hover:shadow-xl p-0 hover:scale-105"
+                  title="Profile & Settings"
+                >
+                  <div className="h-full w-full rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500">
+                    <span className="text-base font-bold drop-shadow-lg">
+                      {user?.name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                    </span>
+                  </div>
+                </Button>
+
+                {/* Profile Menu */}
+                {showProfileMenu && (
+                  <div
+                    className="absolute top-14 right-0 w-72 bg-black/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* User Info Header */}
+                    <div className="p-4 border-b border-white/10 bg-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <p className="text-white font-semibold truncate">{user?.name}</p>
+                          <p className="text-white/60 text-xs truncate">{user?.email}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-white font-semibold truncate">{user?.name}</p>
-                      <p className="text-white/60 text-xs truncate">{user?.email}</p>
+
+                    {/* Menu Items */}
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(true);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
+                      >
+                        <Edit className="h-4 w-4 text-purple-400" />
+                        <span>Edit Profile</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowThemeSelector(!showThemeSelector);
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Palette className="h-4 w-4 text-blue-400" />
+                          <span>Appearances</span>
+                        </div>
+                        <ChevronRight className={`h-4 w-4 transition-transform ${showThemeSelector ? 'rotate-90' : ''}`} />
+                      </button>
+
+                      {/* Theme Selector Sub-panel (Inline) */}
+                      {showThemeSelector && (
+                        <div className="pl-10 pr-2 pb-2 grid grid-cols-3 gap-2 animate-in slide-in-from-top-2">
+                          {backgroundThemes.map((theme) => (
+                            <button
+                              key={theme.id}
+                              onClick={() => setSelectedBackground(theme)}
+                              className={`relative h-12 rounded-lg overflow-hidden border transition-all ${selectedBackground.id === theme.id
+                                ? 'border-white ring-2 ring-white/20'
+                                : 'border-white/20 hover:border-white/50'
+                                }`}
+                              title={theme.name}
+                            >
+                              <div
+                                className="absolute inset-0"
+                                style={{
+                                  background: `linear-gradient(to bottom right, ${theme.colors.from}, ${theme.colors.via}, ${theme.colors.to})`
+                                }}
+                              />
+                              {selectedBackground.id === theme.id && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full shadow-sm" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setIsSettingsOpen(true);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
+                      >
+                        <Settings className="h-4 w-4 text-green-400" />
+                        <span>Settings</span>
+                      </button>
+
+                      <div className="h-px bg-white/10 my-1 mx-2" />
+
+                      <button
+                        onClick={signOut}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left text-sm"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                {/* Menu Items */}
-                <div className="p-2 space-y-1">
-                  <button
-                    onClick={() => {
-                      setIsProfileOpen(true);
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
-                  >
-                    <Edit className="h-4 w-4 text-purple-400" />
-                    <span>Edit Profile</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setShowThemeSelector(!showThemeSelector);
-                    }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Palette className="h-4 w-4 text-blue-400" />
-                      <span>Appearances</span>
-                    </div>
-                    <ChevronRight className={`h-4 w-4 transition-transform ${showThemeSelector ? 'rotate-90' : ''}`} />
-                  </button>
-
-                  {/* Theme Selector Sub-panel (Inline) */}
-                  {showThemeSelector && (
-                    <div className="pl-10 pr-2 pb-2 grid grid-cols-3 gap-2 animate-in slide-in-from-top-2">
-                      {backgroundThemes.map((theme) => (
-                        <button
-                          key={theme.id}
-                          onClick={() => setSelectedBackground(theme)}
-                          className={`relative h-12 rounded-lg overflow-hidden border transition-all ${selectedBackground.id === theme.id
-                            ? 'border-white ring-2 ring-white/20'
-                            : 'border-white/20 hover:border-white/50'
-                            }`}
-                          title={theme.name}
-                        >
-                          <div
-                            className="absolute inset-0"
-                            style={{
-                              background: `linear-gradient(to bottom right, ${theme.colors.from}, ${theme.colors.via}, ${theme.colors.to})`
-                            }}
-                          />
-                          {selectedBackground.id === theme.id && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <div className="w-1.5 h-1.5 bg-white rounded-full shadow-sm" />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setIsSettingsOpen(true);
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-white transition-colors text-left text-sm"
-                  >
-                    <Settings className="h-4 w-4 text-green-400" />
-                    <span>Settings</span>
-                  </button>
-
-                  <div className="h-px bg-white/10 my-1 mx-2" />
-
-                  <button
-                    onClick={signOut}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left text-sm"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -257,8 +269,163 @@ export default function Home() {
         {/* Floating Action Buttons Dock */}
         <div className="fixed right-6 bottom-24 z-40 flex flex-col gap-4 items-center">
 
-          {/* Reminder Manager */}
-          <ReminderManager />
+          {/* Professional Tools Menu */}
+          <div className="relative group">
+            <button
+              onClick={() => setShowToolsMenu(!showToolsMenu)}
+              className={`w-12 h-12 rounded-xl text-white shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center border border-white/30 backdrop-blur-sm relative overflow-hidden ${showToolsMenu
+                ? 'bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500'
+                : 'bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800'
+                }`}
+              aria-label="Tools Menu"
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Wrench className={`w-5 h-5 relative z-10 transition-transform duration-300 ${showToolsMenu ? 'rotate-90' : ''}`} />
+            </button>
+          </div>
+
+          {/* Tools Menu - Center Screen Modal */}
+          {showToolsMenu && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200"
+                onClick={() => setShowToolsMenu(false)}
+              />
+
+              {/* Menu Modal */}
+              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90vw] max-w-md bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                      <Wrench className="w-5 h-5" />
+                      Tools & Utilities
+                    </h3>
+                    <button
+                      onClick={() => setShowToolsMenu(false)}
+                      className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                      aria-label="Close"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Quick access to productivity features</p>
+                </div>
+
+                {/* Tools Grid */}
+                <div className="p-4 grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+                  {/* Alarm */}
+                  <button
+                    onClick={() => {
+                      console.log('Set Alarm clicked');
+                      setShowToolsMenu(false);
+                    }}
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/10 text-white transition-all hover:scale-105 group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                      <Bell className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Set Alarm</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Wake up reminders</div>
+                    </div>
+                  </button>
+
+                  {/* Notes */}
+                  <button
+                    onClick={() => {
+                      console.log('Take Notes clicked');
+                      setShowToolsMenu(false);
+                    }}
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/10 text-white transition-all hover:scale-105 group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                      <StickyNote className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Take Notes</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Quick note taking</div>
+                    </div>
+                  </button>
+
+                  {/* Reminders */}
+                  <button
+                    onClick={() => {
+                      console.log('Set Reminder clicked');
+                      setShowToolsMenu(false);
+                    }}
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/10 text-white transition-all hover:scale-105 group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Set Reminder</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Task reminders</div>
+                    </div>
+                  </button>
+
+                  {/* Calendar */}
+                  <button
+                    onClick={() => {
+                      console.log('Calendar clicked');
+                      setShowToolsMenu(false);
+                    }}
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/10 text-white transition-all hover:scale-105 group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                      <Calendar className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Calendar</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Schedule events</div>
+                    </div>
+                  </button>
+
+                  {/* Email */}
+                  <button
+                    onClick={() => {
+                      console.log('Send Email clicked');
+                      setShowToolsMenu(false);
+                    }}
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/10 text-white transition-all hover:scale-105 group"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                      <Send className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Send Email</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Compose & send</div>
+                    </div>
+                  </button>
+
+                  {/* Coming Soon */}
+                  <button
+                    disabled
+                    className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white/5 text-gray-500 cursor-not-allowed opacity-50"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">More Soon</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Coming soon</div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-3 border-t border-white/10 bg-white/5">
+                  <p className="text-xs text-gray-400 text-center">Click any tool to get started</p>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Camera Toggle */}
           <CameraToggleButton
@@ -276,14 +443,14 @@ export default function Home() {
                 setSelectedPersonality(personalities[nextIndex].value);
               }}
               className={`w-12 h-12 rounded-xl text-white shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center border border-white/30 backdrop-blur-sm relative overflow-hidden ${selectedPersonality === 'doctor'
-                  ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500'
-                  : selectedPersonality === 'teacher'
-                    ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500'
-                    : selectedPersonality === 'student'
-                      ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500'
-                      : selectedPersonality === 'girlfriend'
-                        ? 'bg-gradient-to-br from-pink-500 via-rose-500 to-red-500'
-                        : 'bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500'
+                ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500'
+                : selectedPersonality === 'teacher'
+                  ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500'
+                  : selectedPersonality === 'student'
+                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500'
+                    : selectedPersonality === 'girlfriend'
+                      ? 'bg-gradient-to-br from-pink-500 via-rose-500 to-red-500'
+                      : 'bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500'
                 }`}
               aria-label="Switch Personality"
             >
