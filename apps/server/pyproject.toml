@@ -25,7 +25,7 @@ dependencies = [
     "transformers @ git+https://github.com/huggingface/transformers@v4.49.0-SmolVLM-2",
     "accelerate>=1.7.0",
     "bitsandbytes>=0.46.0",
-    "triton-windows==3.2.0.post17",
+    "triton-windows==3.2.0.post17 ; sys_platform == 'win32'",
     "pip>=25.1.1",
     "fastapi[standard]>=0.115.6",
     "uvicorn>=0.34.3",
