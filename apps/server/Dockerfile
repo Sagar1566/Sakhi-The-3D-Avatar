@@ -6,9 +6,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+# Install uv (using official image pattern)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -30,7 +29,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy uv and virtual environment from base
-COPY --from=base /root/.cargo/bin/uv /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 COPY --from=base /app/.venv /app/.venv
 
 # Copy application code (relative to apps/server)
