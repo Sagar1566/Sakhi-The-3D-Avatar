@@ -76,13 +76,19 @@ interface WebSocketProviderProps {
 
 // Automatically use localhost in development, Render in production
 const getDefaultServerUrl = () => {
+  // Priority 1: Check environment variable
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL;
+  }
+
+  // Priority 2: Check window location (for localhost)
   if (typeof window !== 'undefined') {
-    // In browser
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'ws://localhost:8000/ws/test-client';
     }
   }
-  // Production (Vercel or any deployed environment)
+
+  // Priority 3: Default to production
   return 'wss://sakhi-the-3d-avatar-2.onrender.com/ws/test-client';
 };
 

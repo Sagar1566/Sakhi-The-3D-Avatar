@@ -4,7 +4,8 @@ const nextConfig = {
     turbopack: {},
 
     // Optimize production builds
-    reactStrictMode: true,
+    // Disabled to prevent WebGL context loss with THREE.js
+    reactStrictMode: false,
     poweredByHeader: false,
     compress: true,
 

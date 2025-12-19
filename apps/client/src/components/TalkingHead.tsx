@@ -54,7 +54,10 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream,
       lipsyncLang: string;
     }) => Promise<void>;
     setMood: (mood: string) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    nodeAvatar?: any; // Access to internal avatar object for cleanup
   } | null>(null);
+  const isInitializedRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<
     Array<{
@@ -372,7 +375,7 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream,
 
   // Initialize TalkingHead
   useEffect(() => {
-    if (!scriptsLoaded || !avatarRef.current) return;
+    if (!scriptsLoaded || !avatarRef.current || isInitializedRef.current) return;
 
     const initTalkingHead = async () => {
       try {
@@ -402,6 +405,8 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream,
           avatarMood: selectedMood
         });
 
+        isInitializedRef.current = true;
+
         await loadAvatar(selectedAvatar);
         setIsLoading(false);
         showStatus('Avatar ready!', 'success');
@@ -410,6 +415,7 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream,
         connect();
       } catch (error) {
         setIsLoading(false);
+        isInitializedRef.current = false;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         showStatus(`Failed to initialize: ${errorMessage}`, 'error');
       }
@@ -418,11 +424,62 @@ const TalkingHead: React.FC<TalkingHeadProps> = ({ className = '', cameraStream,
     initTalkingHead();
 
     return () => {
-      if (headRef.current) {
+      if (headRef.current && isInitializedRef.current) {
         try {
+          console.log('Cleaning up TalkingHead and WebGL context...');
+
+          // Stop any ongoing audio
           headRef.current.stop();
+
+          // Access the internal THREE.js renderer and dispose of it
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const head = headRef.current as any;
+
+          // Dispose of the avatar's renderer and scene
+          if (head.nodeAvatar) {
+            const avatar = head.nodeAvatar;
+
+            // Dispose of renderer
+            if (avatar.renderer) {
+              console.log('Disposing THREE.js renderer...');
+              avatar.renderer.dispose();
+
+              // Force lose the WebGL context
+              const gl = avatar.renderer.getContext();
+              if (gl) {
+                const loseContext = gl.getExtension('WEBGL_lose_context');
+                if (loseContext) {
+                  loseContext.loseContext();
+                  console.log('WebGL context forcefully released');
+                }
+              }
+            }
+
+            // Dispose of scene and all its children
+            if (avatar.scene) {
+              console.log('Disposing THREE.js scene...');
+              avatar.scene.traverse((object: any) => {
+                if (object.geometry) {
+                  object.geometry.dispose();
+                }
+                if (object.material) {
+                  if (Array.isArray(object.material)) {
+                    object.material.forEach((material: any) => material.dispose());
+                  } else {
+                    object.material.dispose();
+                  }
+                }
+              });
+            }
+          }
+
+          headRef.current = null;
+          isInitializedRef.current = false;
+          console.log('TalkingHead cleanup complete');
         } catch (error) {
           console.error('Cleanup error:', error);
+          headRef.current = null;
+          isInitializedRef.current = false;
         }
       }
     };

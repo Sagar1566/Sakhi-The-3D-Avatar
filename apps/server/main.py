@@ -695,16 +695,22 @@ manager = ConnectionManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Initializing models on startup...")
-    try:
-        # Initialize processors to load models
-        whisper_processor = WhisperProcessor.get_instance()
-        smolvlm_processor = SmolVLMProcessor.get_instance()
-        tts_processor = KokoroTTSProcessor.get_instance()
-        logger.info("All models initialized successfully")
-    except Exception as e:
-        logger.error(f"Error initializing models: {e}")
-        raise
+    lightweight_mode = os.getenv("LIGHTWEIGHT_MODE", "false").lower() == "true"
+    
+    if lightweight_mode:
+        logger.warning("⚠️ LIGHTWEIGHT MODE ENABLED - AI models will NOT be loaded")
+        logger.warning("⚠️ Server will run but AI features will be disabled")
+    else:
+        logger.info("Initializing models on startup...")
+        try:
+            # Initialize processors to load models
+            whisper_processor = WhisperProcessor.get_instance()
+            smolvlm_processor = SmolVLMProcessor.get_instance()
+            tts_processor = KokoroTTSProcessor.get_instance()
+            logger.info("All models initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing models: {e}")
+            raise
 
     yield  # Server is running
 
